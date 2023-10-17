@@ -1,10 +1,13 @@
-# KOKOT link for live-share
+#  jasomti kokokoooot
+KOKOT! Live-share
 Firstly you might need to install [Live Share](https://marketplace.visualstudio.com/items?itemName=MS-vsliveshare.vsliveshare).
 
 Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?6574AC7B3003EB06F890530AC52A65A4B370) to collaborate real time.
 
+# TODO 
+1. Spraviť mega brutal model pre task __rental_competition.py__
 
-## Essay from copilot
+# Essay from copilot
 
 Machine learning is a subfield of artificial intelligence that involves the development of algorithms and statistical models that enable computer systems to learn from data and make predictions or decisions without being explicitly programmed. The goal of machine learning is to create systems that can automatically improve their performance on a specific task over time, by learning from experience.
 
