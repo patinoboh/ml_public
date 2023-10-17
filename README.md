@@ -1,3 +1,10 @@
+# KOKOT link for live-share
+Firstly you might need to install [Live Share ](https://marketplace.visualstudio.com/items?itemName=MS-vsliveshare.vsliveshare)
+Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?36B6438AE3C04A113AB7014F5A0D424697D6) to collaborate real time.
+
+
+## Essay from copilot
+
 Machine learning is a subfield of artificial intelligence that involves the development of algorithms and statistical models that enable computer systems to learn from data and make predictions or decisions without being explicitly programmed. The goal of machine learning is to create systems that can automatically improve their performance on a specific task over time, by learning from experience.
 
 There are three main types of machine learning: supervised learning, unsupervised learning, and reinforcement learning. In supervised learning, the algorithm is trained on a labeled dataset, where each data point is associated with a target label or output. The goal is to learn a mapping between the input features and the output labels, so that the algorithm can make accurate predictions on new, unseen data. Examples of supervised learning tasks include image classification, speech recognition, and natural language processing.
