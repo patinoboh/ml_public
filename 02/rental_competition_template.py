@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+#
+#6a81285c-247a-11ec-986f-f39926f24a9c
+
 import argparse
 import lzma
 import os
@@ -51,6 +54,24 @@ class Dataset:
             setattr(self, key, value)
 
 
+def train_model(data):
+    """
+    nech je to prehladnejsie pls
+    """    
+
+    # TODO 
+    # okay tak model bude vyzerat ze pipeline :
+    #   preprocessing : asi teda one hot, scaler a polynomial features
+    #                   polynomial features : tie dame do CV skusime ci bude lepsie 1, 2 alebo az 3 ; je mozne ze 1 bude naj lebo hento uz bude overfitted
+    #   potom tam najebeme ten model (a neviem ci sa mozu dat aj viacere aby ich ptm skusal CV)
+    #   potom vytvorime param_grid ktory bude CV skusat
+    #   a najebeme to donho    
+
+
+    model = ...
+    return model
+
+
 def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
     if args.predict is None:
         # We are training a model.
@@ -58,7 +79,7 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         train = Dataset()
 
         # TODO: Train a model on the given dataset and store it in `model`.
-        model = ...
+        model = train_model(train)
 
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
