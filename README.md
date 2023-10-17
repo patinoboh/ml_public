@@ -1,7 +1,7 @@
 #  KOKOT! Live-share
 Firstly you might need to install [Live Share](https://marketplace.visualstudio.com/items?itemName=MS-vsliveshare.vsliveshare).
 
-Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?6574AC7B3003EB06F890530AC52A65A4B370) to collaborate real time.
+Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?6C4A3CDE6450D4BF1C62A05E0BD79ABE3E64) to collaborate real time.
 
 # TODO 
 1. Spraviť mega brutal model pre task __rental_competition.py__
