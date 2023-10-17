@@ -11,6 +11,7 @@ import sklearn
 import sklearn.pipeline
 import sklearn.compose
 import sklearn.linear_model
+import sklearn.preprocessing
 
 import sklearn.dummy
 
@@ -69,39 +70,30 @@ def get_integer_columns(matrix):
             cols.append(col_num)
     return np.array(cols)
 
+
 def train_model(data):
-
-
-    # TODO 
     # okay tak model bude vyzerat ze pipeline :
     #   preprocessing : asi teda one hot, scaler a polynomial features
     #                   polynomial features : tie dame do CV skusime ci bude lepsie 1, 2 alebo az 3 ; je mozne ze 1 bude naj lebo hento uz bude overfitted
     
     int_columns = get_integer_columns(data.data)
     
-    model = [("regressor", sklearn.linear_model.LinearRegression())]
+    model = [
+                ("poly", sklearn.preprocessing.PolynomialFeatures(2)),
+                ("lr_cv", sklearn.linear_model.RidgeCV(alphas=np.arange(0.1, 10.1, 0.1))),
+            ]    
     
     model = sklearn.pipeline.Pipeline(
-        [sklearn.compose.ColumnTransformer(
-            transformers = [("one hot", sklearn.preprocessing.OneHotEncoder(handle_unknown='ignore', sparse=False), int_columns),
-                            ("scale", sklearn.preprocessing.StandardScaler(), ~int_columns)]
-        ),
-        sklearn.preprocessing.PolynomialFeatures(2, include_bias=False)]
-        + model
-    )
+        [("preprocess", sklearn.compose.ColumnTransformer(
+            [("onehot", sklearn.preprocessing.OneHotEncoder(handle_unknown='ignore', sparse=False), int_columns),
+             ("scaler", sklearn.preprocessing.StandardScaler(), ~int_columns),]))
+        ] + model
+        )
     
-
-    
-
-
-
-    
-    
+    #model.fit(model.fit_transform(data.data), data.target)    
     #   potom tam dame ten model (a neviem ci sa mozu dat aj viacere aby ich ptm skusal CV)
     #   potom vytvorime param_grid ktory bude CV skusat
     #   a dame to donho    
-
-
 
     return model
 
@@ -110,13 +102,9 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
     if args.predict is None:
         # We are training a model.
         np.random.seed(args.seed)
-        train = Dataset()
-
-        # TODO: Train a model on the given dataset and store it in `model`.
+        train = Dataset()        
+    
         model = train_model(train)
-
-        # we want to have maximum verbose while training
-        model.verbose = True
         model.fit(train.data, train.target)
 
         # Serialize the model.
