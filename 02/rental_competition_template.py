@@ -78,17 +78,19 @@ def train_model(data):
     
     int_columns = get_integer_columns(data.data)
     
-    model = [
-                ("poly", sklearn.preprocessing.PolynomialFeatures(2)),
-                ("lr_cv", sklearn.linear_model.RidgeCV(alphas=np.arange(0.1, 10.1, 0.1))),
-            ]    
+    model = [("lr", sklearn.linear_model.LinearRegression())]    
     
     model = sklearn.pipeline.Pipeline(
         [("preprocess", sklearn.compose.ColumnTransformer(
-            [("onehot", sklearn.preprocessing.OneHotEncoder(handle_unknown='ignore', sparse=False), int_columns),
-             ("scaler", sklearn.preprocessing.StandardScaler(), ~int_columns),]))
-        ] + model
+            [("onehot", sklearn.preprocessing.OneHotEncoder(handle_unknown='ignore', sparse_output=False), int_columns),
+             ("scaler", sklearn.preprocessing.StandardScaler(), ~int_columns),])), 
+             ("poly", sklearn.preprocessing.PolynomialFeatures(3)) ]       
+        + model
         )
+    
+    # TODO
+    # grid search
+    # dobry tento ony
     
     #model.fit(model.fit_transform(data.data), data.target)    
     #   potom tam dame ten model (a neviem ci sa mozu dat aj viacere aby ich ptm skusal CV)

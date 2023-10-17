@@ -110,7 +110,8 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
             else:
                 raise ValueError("Unknown model '{}'".format(args.model))
             int_columns = np.all(train.data.astype(int) == train.data, axis=0)
-            model = sklearn.pipeline.Pipeline([
+            model = sklearn.pipeline.Pipeline(
+                [
                 ("preprocess", sklearn.compose.ColumnTransformer([
                     ("onehot", sklearn.preprocessing.OneHotEncoder(handle_unknown="ignore"), int_columns),
                     ("scaler", sklearn.preprocessing.StandardScaler(), ~int_columns),
