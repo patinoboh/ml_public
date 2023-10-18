@@ -12,6 +12,7 @@ import sklearn.pipeline
 import sklearn.compose
 import sklearn.linear_model
 import sklearn.preprocessing
+import sklearn.model_selection
 
 import sklearn.dummy
 
@@ -71,26 +72,27 @@ def get_integer_columns(matrix):
     return np.array(cols)
 
 
-def train_model(data):    
+def create_model(data):    
     int_columns = get_integer_columns(data.data)
     
     model = [("algo", sklearn.linear_model.PoissonRegressor(max_iter=500, alpha=1, verbose=3))]
 
     model = sklearn.pipeline.Pipeline(
         [("preprocess", sklearn.compose.ColumnTransformer(
-            [("onehot", sklearn.preprocessing.OneHotEncoder(handle_unknown='ignore', sparse_output=False), int_columns),
+            [("onehot", sklearn.preprocessing.OneHotEncoder(handle_unknown='ignore', sparse=False), int_columns),
              ("scaler", sklearn.preprocessing.StandardScaler(), ~int_columns),])), 
              ("poly", sklearn.preprocessing.PolynomialFeatures(2)) ]       
         + model
         )
     
-    # alphas = (0,1, 0.5, 1, 10, 200,)
-    # max_iters = (100, 500, 1000)
+    #alphas = (0.6, 0.9, 1,)
+    alphas = np.arange(0, 1, 0.1)
+    max_iters = np.arange(100, 1000,100)
     
-    # cross_valid = sklearn.model_selection.StratifiedKFold(5)
-    # params = {"poly__degree" : (1, 2), "algo__max_iter" : max_iters, "algo__alpha" : alphas}
-    # model = sklearn.model_selection.GridSearchCV(estimator=model, cv = cross_valid, param_grid=params, n_jobs=2, refit=True, verbose=10)
-        
+    cross_valid = sklearn.model_selection.StratifiedKFold(5)
+    params = {"poly__degree" : (1,2), "algo__max_iter" : max_iters, "algo__alpha" : alphas}
+    model = sklearn.model_selection.GridSearchCV(estimator=model, cv = cross_valid, param_grid=params, n_jobs=5, refit=True, verbose=10)
+    
     return model
 
 
@@ -100,8 +102,16 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         np.random.seed(args.seed)
         train = Dataset()        
     
-        model = train_model(train)
+        model = create_model(train)
         model.fit(train.data, train.target)
+        
+        for rank, accuracy, params in zip(model.cv_results_["rank_test_score"],
+                                         model.cv_results_["mean_test_score"],
+                                         model.cv_results_["params"]):
+           print("Rank: {:2d} Cross-val: {:.1f}%".format(rank, 100 * accuracy),
+                 *("{}: {:<5}".format(key, value) for key, value in params.items()))
+        
+        print(model.best_params_)
 
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
