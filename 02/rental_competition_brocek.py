@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import argparse
 import lzma
 import os
@@ -7,14 +5,10 @@ import pickle
 import sys
 from typing import Optional
 import urllib.request
-import sklearn
 import sklearn.pipeline
+import sklearn.preprocessing
 import sklearn.compose
 import sklearn.linear_model
-import sklearn.preprocessing
-
-import sklearn.dummy
-
 
 import numpy as np
 import numpy.typing as npt
@@ -45,7 +39,7 @@ class Dataset:
     - relative humidity (0-1 range)
     - windspeed (normalized to 0-1 range)
 
-    The target variable is the number of rented bikes in the given hour.
+    The target variable is the number of rentals in the given hour.
     """
     def __init__(self,
                  name="rental_competition.train.npz",
@@ -59,69 +53,58 @@ class Dataset:
         for key, value in dataset.items():
             setattr(self, key, value)
 
+def get_pipeline():
+    one_hot_transformer = sklearn.preprocessing.OneHotEncoder(sparse=False, handle_unknown="ignore")    
+    scaler_transformer = sklearn.preprocessing.StandardScaler()        
+    transf = sklearn.compose.ColumnTransformer(transformers = [ ("one hot", one_hot_transformer, [0,1,2,3,4,5,6] ) ], remainder="passthrough")
+    polynomial_features = sklearn.preprocessing.PolynomialFeatures(2, include_bias=False)
+    pipeline = sklearn.pipeline.Pipeline([ ("one hot, scaler transformers", transf), ("polynomial features", polynomial_features) ])
+    # pipeline = sklearn.pipeline.Pipeline([ ("one hot, scaler transformers", transf) ])
+    return pipeline
 
-def get_integer_columns(matrix):
-    cols = []    
-    for col_num, column in enumerate(matrix.transpose()):
-        integers = True
-        for data in column:
-            integers &= data.is_integer()
-        if(integers):
-            cols.append(col_num)
-    return np.array(cols)
+def predict_and_print(model, valid_set, valid_target):
+    predictions = model.predict(valid_set)
+    print(sklearn.metrics.mean_squared_error( predictions, valid_target, squared = False))
 
-
-def train_model(data):
-    # okay tak model bude vyzerat ze pipeline :
-    #   preprocessing : asi teda one hot, scaler a polynomial features
-    #                   polynomial features : tie dame do CV skusime ci bude lepsie 1, 2 alebo az 3 ; je mozne ze 1 bude naj lebo hento uz bude overfitted
+def train_model(model, train, pipeline, t_size):    
+    train.data = np.insert(train.data, train.data.shape[1], values=1, axis=1)
+    train_set, valid_set, train_target, valid_target = sklearn.model_selection.train_test_split(train.data, train.target, test_size=t_size)        
+    train_data_processed = pipeline.fit_transform(train_set)
+    model.fit(train_data_processed, train_target)
+    predict_and_print(model, pipeline.transform(valid_set), valid_target)
     
-    int_columns = get_integer_columns(data.data)
-    
-    model = [("lr", sklearn.linear_model.Ridge(alpha=0.1))]
-    
-    model = sklearn.pipeline.Pipeline(
-        [("preprocess", sklearn.compose.ColumnTransformer(
-            [("onehot", sklearn.preprocessing.OneHotEncoder(handle_unknown='ignore', sparse_output=False), int_columns),
-             ("scaler", sklearn.preprocessing.StandardScaler(), ~int_columns),])), 
-             ("poly", sklearn.preprocessing.PolynomialFeatures(3)) ]       
-        + model
-        )
-    
-    # TODO
-    # grid search
-    # dobry tento ony
-    
-    #model.fit(model.fit_transform(data.data), data.target)    
-    #   potom tam dame ten model (a neviem ci sa mozu dat aj viacere aby ich ptm skusal CV)
-    #   potom vytvorime param_grid ktory bude CV skusat
-    #   a dame to donho    
-
-    return model
-
 
 def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
+    pipeline = get_pipeline()
+    
     if args.predict is None:
         # We are training a model.
         np.random.seed(args.seed)
-        train = Dataset()        
-    
-        model = train_model(train)
-        model.fit(train.data, train.target)
-
-        # Serialize the model.
+        train = Dataset()
+        
+        # TODO: Train a model on the given dataset and store it in `model`.
+        
+        train.data = np.insert(train.data, train.data.shape[1], values=1, axis=1)        
+        model = sklearn.linear_model.Ridge(alpha = 1)                        
+        model.fit(pipeline.fit_transform(train.data), train.target)
+        
+        # Serialize the model.    
+        
         with lzma.open(args.model_path, "wb") as model_file:
             pickle.dump(model, model_file)
 
     else:
         # Use the model and return test set predictions, either as a Python list or a NumPy array.
-        test = Dataset(args.predict)
-
+        test = Dataset(args.predict)        
+        
         with lzma.open(args.model_path, "rb") as model_file:
             model = pickle.load(model_file)
 
         # TODO: Generate `predictions` with the test set predictions.
-        predictions = model.predict(test.data)
+        
+        test_data = np.insert(test.data, test.data.shape[1], values=1, axis=1)
+        test_data = pipeline.fit_transform(test_data)
+        predictions = model.predict(test_data)
 
         return predictions
 
@@ -129,12 +112,6 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
     main(args)
-
-# Rasto Nowak
-#6a81285c-247a-11ec-986f-f39926f24a9c
-
+    
 # Patrik Brocek
-# 5ccdc432-238f-11ec-986f-f39926f24a9c
-
-# Martin Oravec
-# 1056cfa0-24fb-11ec-986f-f39926f24a9c
+# znovu odovzdanie z minuleho roka
