@@ -93,12 +93,8 @@ def train_model(data):
     solvers = ("lbfgs", "newton-cholesky")
     max_iters = (100, 1000)
     
-    import warnings
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
-
     cross_valid = sklearn.model_selection.StratifiedKFold(5)
-    params = {"poly__degree" : (1, 2, 3), "algo__max_iter" : max_iters, "algo__solver" : solvers}
-    # params = {"poly__degree" : (1, 2, 3), "algo__solver" : solvers}
+    params = {"poly__degree" : (1, 2), "algo__max_iter" : max_iters, "algo__solver" : solvers, "algo__alpha" : alphas}
     model = sklearn.model_selection.GridSearchCV(estimator=model, cv = cross_valid, param_grid=params, n_jobs=1, refit=True, verbose=10)
         
     return model
