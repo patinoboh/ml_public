@@ -71,15 +71,10 @@ def get_integer_columns(matrix):
     return np.array(cols)
 
 
-def train_model(data):
-    # okay tak model bude vyzerat ze pipeline :
-    #   preprocessing : asi teda one hot, scaler a polynomial features
-    #                   polynomial features : tie dame do CV skusime ci bude lepsie 1, 2 alebo az 3 ; je mozne ze 1 bude naj lebo hento uz bude overfitted
-    
+def train_model(data):    
     int_columns = get_integer_columns(data.data)
     
-    model = [("algo", sklearn.linear_model.PoissonRegressor(max_iter=1000))]
-    # what other parameters can i give to poissonregressor?
+    model = [("algo", sklearn.linear_model.PoissonRegressor(max_iter=500, alpha=1, verbose=3))]
 
     model = sklearn.pipeline.Pipeline(
         [("preprocess", sklearn.compose.ColumnTransformer(
@@ -89,13 +84,12 @@ def train_model(data):
         + model
         )
     
-    alphas = (0,1, 0.5, 1, 10, 100, 1000)
-    solvers = ("lbfgs", "newton-cholesky")
-    max_iters = (100, 1000)
+    # alphas = (0,1, 0.5, 1, 10, 200,)
+    # max_iters = (100, 500, 1000)
     
-    cross_valid = sklearn.model_selection.StratifiedKFold(5)
-    params = {"poly__degree" : (1, 2), "algo__max_iter" : max_iters, "algo__solver" : solvers, "algo__alpha" : alphas}
-    model = sklearn.model_selection.GridSearchCV(estimator=model, cv = cross_valid, param_grid=params, n_jobs=1, refit=True, verbose=10)
+    # cross_valid = sklearn.model_selection.StratifiedKFold(5)
+    # params = {"poly__degree" : (1, 2), "algo__max_iter" : max_iters, "algo__alpha" : alphas}
+    # model = sklearn.model_selection.GridSearchCV(estimator=model, cv = cross_valid, param_grid=params, n_jobs=2, refit=True, verbose=10)
         
     return model
 
@@ -111,7 +105,9 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
 
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
+            print("Saving model...")
             pickle.dump(model, model_file)
+        print("Model saved!")
 
     else:
         # Use the model and return test set predictions, either as a Python list or a NumPy array.
