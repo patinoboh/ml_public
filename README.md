@@ -3,6 +3,9 @@ Firstly you might need to install [Live Share](https://marketplace.visualstudio.
 
 Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?6C4A3CDE6450D4BF1C62A05E0BD79ABE3E64) to collaborate real time.
 
+
+Rasto : https://prod.liveshare.vsengsaas.visualstudio.com/join?3A317AB245D853BB44D72D6587DF6B51C455
+
 # TODO 
 1. Spraviť mega brutal model pre task __rental_competition.py__
 
