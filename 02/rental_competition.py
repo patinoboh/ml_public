@@ -78,7 +78,7 @@ def train_model(data):
     
     int_columns = get_integer_columns(data.data)
     
-    model = [("algo", sklearn.linear_model.PoissonRegressor(max_iter=1000, alpha=0.1, verbose=3))]
+    model = [("algo", sklearn.linear_model.PoissonRegressor(max_iter=1000))]
     # what other parameters can i give to poissonregressor?
 
     model = sklearn.pipeline.Pipeline(
@@ -93,10 +93,13 @@ def train_model(data):
     solvers = ("lbfgs", "newton-cholesky")
     max_iters = (100, 1000)
     
+    import warnings
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+
     cross_valid = sklearn.model_selection.StratifiedKFold(5)
-    params = {"poly__degree" : (1, 2, 3), "algo__alpha" : alphas, "algo__max_iter" : max_iters, "algo__solver" : solvers}
-    model = sklearn.model_selection.GridSearchCV(estimator=model, cv = cross_valid, param_grid=params, n_jobs=-1, refit=True)
-    # print(model.best_params_)
+    params = {"poly__degree" : (1, 2, 3), "algo__max_iter" : max_iters, "algo__solver" : solvers}
+    # params = {"poly__degree" : (1, 2, 3), "algo__solver" : solvers}
+    model = sklearn.model_selection.GridSearchCV(estimator=model, cv = cross_valid, param_grid=params, n_jobs=1, refit=True, verbose=10)
         
     return model
 
