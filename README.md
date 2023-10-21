@@ -3,11 +3,12 @@ Firstly you might need to install [Live Share](https://marketplace.visualstudio.
 
 Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?6C4A3CDE6450D4BF1C62A05E0BD79ABE3E64) to collaborate real time.
 
-
-Rasto : https://prod.liveshare.vsengsaas.visualstudio.com/join?3A317AB245D853BB44D72D6587DF6B51C455
+[Rastov link](https://prod.liveshare.vsengsaas.visualstudio.com/join?3A317AB245D853BB44D72D6587DF6B51C455)
 
 # TODO 
-1. Spraviť mega brutal model pre task __rental_competition.py__
+
+1. Spraviť mega brutal model pre task **thyroid_competition.py**
+
 
 # Essay from copilot
 
@@ -22,3 +23,5 @@ In reinforcement learning, the algorithm learns by interacting with an environme
 Machine learning has become increasingly popular in recent years, due to the explosion of data and the availability of powerful computing resources. It has been applied to a wide range of domains, including healthcare, finance, marketing, and entertainment. However, there are also challenges and limitations to machine learning, such as the need for large amounts of high-quality data, the risk of bias and discrimination, and the difficulty of interpreting and explaining the decisions made by the algorithms.
 
 In conclusion, machine learning is a fascinating and rapidly evolving field that has the potential to revolutionize many aspects of our lives. By enabling computers to learn from data and make predictions or decisions, we can tackle complex problems and create intelligent systems that can assist us in a wide range of tasks.
+
+![obrazok](https://i.itworldcanada.com/wp-content/uploads/2023/08/GettyImages-1448152453-696x391.jpg)

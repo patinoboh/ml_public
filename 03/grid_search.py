@@ -58,7 +58,7 @@ def main(args: argparse.Namespace) -> float:
     # params = {"algo__solver" : ("lbfgs", "sag"), "algo__C" : [0.01, 1.0, 100.0]}
     cross_valid = sklearn.model_selection.StratifiedKFold(5)
     params = {"poly__degree" : (1, 2), "algo__solver" : ("lbfgs", "sag"), "algo__C" : [0.01, 1.0, 100.0]}
-    model = sklearn.model_selection.GridSearchCV(estimator=potrubie, cv = cross_valid, param_grid=params, n_jobs=-1, refit=True)    
+    model = sklearn.model_selection.GridSearchCV(estimator=potrubie, cv = cross_valid, param_grid=params, n_jobs=-1, refit=True)
     # print best params
     # print(model.best_params_)
     model.fit(train_data, train_target)
