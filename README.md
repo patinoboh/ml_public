@@ -1,7 +1,7 @@
 #  KOKOT! Live-share
 Firstly you might need to install [Live Share](https://marketplace.visualstudio.com/items?itemName=MS-vsliveshare.vsliveshare).
 
-Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?6C4A3CDE6450D4BF1C62A05E0BD79ABE3E64) to collaborate real time.
+Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?4300E68F7A71705BE6E1E788894D106B4643) to collaborate real time.
 
 [Rastov link](https://prod.liveshare.vsengsaas.visualstudio.com/join?3A317AB245D853BB44D72D6587DF6B51C455)
 
