@@ -1,24 +1,31 @@
 #  KOKOT! Live-share
+
 Firstly you might need to install [Live Share](https://marketplace.visualstudio.com/items?itemName=MS-vsliveshare.vsliveshare).
 
 Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?4300E68F7A71705BE6E1E788894D106B4643) to collaborate real time.
 
 [Rastov link](https://prod.liveshare.vsengsaas.visualstudio.com/join?3A317AB245D853BB44D72D6587DF6B51C455)
 
+
 # TODO 
 
 1. Spraviť mega brutal model pre task **thyroid_competition.py**
 
+
 # Tagy
 
 Rasto Nowak
-#6a81285c-247a-11ec-986f-f39926f24a9c
+
+6a81285c-247a-11ec-986f-f39926f24a9c
 
 Patrik Brocek
+
 5ccdc432-238f-11ec-986f-f39926f24a9c
 
 Martin Oravec
+
 1056cfa0-24fb-11ec-986f-f39926f24a9c
+
 
 # Essay from copilot
 
