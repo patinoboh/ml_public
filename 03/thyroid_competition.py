@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 import lzma
 import os
@@ -15,6 +14,7 @@ import sklearn.compose
 import sklearn.linear_model
 import sklearn.preprocessing
 import sklearn.model_selection
+import sklearn.metrics
 
 import sklearn.dummy
 
@@ -62,40 +62,48 @@ def get_integer_columns(matrix):
             cols.append(col_num)
     return np.array(cols)
 
+
+def get_model(data):
+    int_columns = get_integer_columns(data)
+    
+    model = [("algo", sklearn.linear_model.LogisticRegression())]
+
+    model = sklearn.pipeline.Pipeline(
+        [("preprocess", sklearn.compose.ColumnTransformer(
+            [("onehot", sklearn.preprocessing.OneHotEncoder(handle_unknown='ignore', sparse_output=False), int_columns),
+             ("scaler", sklearn.preprocessing.StandardScaler(), ~int_columns),])), 
+             ("poly", sklearn.preprocessing.PolynomialFeatures(3)) ]
+        + model
+        )
+            
+    cross_valid = sklearn.model_selection.StratifiedKFold(5)
+    params = {'algo__C': [100, 200, 500, 700], 'algo__penalty': ['l2', 'elasticnet'], 'algo__solver': ['liblinear'], 'poly__degree': [3]}
+    model = sklearn.model_selection.GridSearchCV(estimator=model, cv = cross_valid, param_grid=params, n_jobs=2, refit=True, verbose=10)
+    return model
+
+
+def test_model(model, test_data, test_target):    
+    print(sklearn.metrics.accuracy_score(test_target, model.predict(test_data)))
+
+
 def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
     if args.predict is None:
         # We are training a model.
         np.random.seed(args.seed)
-        train = Dataset()
+        dataset = Dataset()
 
-        # TODO: Train a model on the given dataset and store it in `model`.
-        int_columns = get_integer_columns(train.data)
-    
-        #idk este tot mozme vyskusat
-        #model = [ ("lr_cv", sklearn.linear_model.LogisticRegressionCV(Cs=np.geomspace(0.001, 100, 5), max_iter=100)),]
-        
-        model = [ ("algo", sklearn.linear_model.LogisticRegression()),]
-        
-        model = sklearn.pipeline.Pipeline(
-        [("preprocess", sklearn.compose.ColumnTransformer(
-            [("onehot", sklearn.preprocessing.OneHotEncoder(handle_unknown='ignore', sparse=False), int_columns),
-             ("scaler", sklearn.preprocessing.StandardScaler(), ~int_columns),])), 
-             ("poly", sklearn.preprocessing.PolynomialFeatures(3)) ]       
-        + model
-        )
-    
-        #TU treba este vyskusat milion dalsich parametrov
-        max_iters = np.arange(100, 1000,100)
 
-        cross_valid = sklearn.model_selection.StratifiedKFold(5)
-        params = {"poly__degree" : (1,2,3), "algo__max_iter" : max_iters}
-        model = sklearn.model_selection.GridSearchCV(estimator=model, cv = cross_valid, param_grid=params, n_jobs=6, refit=True, verbose=100)
-        
-        
-        model.fit(train.data, train.target)
-        
-        #print(model.best_params_)
+        # TODO: Train a model on the given dataset and store it in `model`.                 
 
+        # train_data, test_data, train_target, test_target = sklearn.model_selection.train_test_split(dataset.data, dataset.target, test_size=1)
+        train_data = dataset.data
+        train_target = dataset.target
+
+        model = get_model(train_data)                        
+        model.fit(train_data, train_target)
+        
+        # test_model(model, test_data, test_target)
+        
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
             pickle.dump(model, model_file)
@@ -116,3 +124,16 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
     main(args)
+
+
+# Rasto Nowak
+
+# 6a81285c-247a-11ec-986f-f39926f24a9c
+
+# Patrik Brocek
+
+# 5ccdc432-238f-11ec-986f-f39926f24a9c
+
+# Martin Oravec
+
+# 1056cfa0-24fb-11ec-986f-f39926f24a9c
