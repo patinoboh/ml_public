@@ -9,6 +9,16 @@ Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?4300
 
 1. Spraviť mega brutal model pre task **thyroid_competition.py**
 
+# Tagy
+
+Rasto Nowak
+#6a81285c-247a-11ec-986f-f39926f24a9c
+
+Patrik Brocek
+5ccdc432-238f-11ec-986f-f39926f24a9c
+
+Martin Oravec
+1056cfa0-24fb-11ec-986f-f39926f24a9c
 
 # Essay from copilot
 
