@@ -64,7 +64,6 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         #   for i in range(len(mlp.coefs_)): mlp.coefs_[i] = mlp.coefs_[i].astype(np.float16)
         #   for i in range(len(mlp.intercepts_)): mlp.intercepts_[i] = mlp.intercepts_[i].astype(np.float16)
         
-        
         model._optimizer = None
         for i in range(len(model.coefs_)): model.coefs_[i] = model.coefs_[i].astype(np.float16)
         for i in range(len(model.intercepts_)): model.intercepts_[i] = model.intercepts_[i].astype(np.float16)
@@ -90,3 +89,17 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
     main(args)
+
+
+
+# Rasto Nowak
+
+# 6a81285c-247a-11ec-986f-f39926f24a9c
+
+# Patrik Brocek
+
+# 5ccdc432-238f-11ec-986f-f39926f24a9c
+
+# Martin Oravec
+
+# 1056cfa0-24fb-11ec-986f-f39926f24a9c
