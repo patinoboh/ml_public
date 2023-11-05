@@ -10,6 +10,10 @@ import urllib.request
 import numpy as np
 import numpy.typing as npt
 
+import sklearn
+from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import ShuffleSplit
+
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
 parser.add_argument("--predict", default=None, type=str, help="Path to the dataset to predict")
@@ -47,7 +51,11 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         train = Dataset()
 
         # TODO: Train a model on the given dataset and store it in `model`.
-        model = ...
+        
+        #MOZNO este scaler
+        model = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(2000), max_iter = 100, tol = 0, alpha = 0)
+        
+        model.fit(train.data, train.target)
 
         # If you trained one or more MLPs, you can use the following code
         # to compress it significantly (approximately 12 times). The snippet
@@ -55,7 +63,13 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         #   mlp._optimizer = None
         #   for i in range(len(mlp.coefs_)): mlp.coefs_[i] = mlp.coefs_[i].astype(np.float16)
         #   for i in range(len(mlp.intercepts_)): mlp.intercepts_[i] = mlp.intercepts_[i].astype(np.float16)
-
+        
+        
+        model._optimizer = None
+        for i in range(len(model.coefs_)): model.coefs_[i] = model.coefs_[i].astype(np.float16)
+        for i in range(len(model.intercepts_)): model.intercepts_[i] = model.intercepts_[i].astype(np.float16)
+        
+        
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
             pickle.dump(model, model_file)
@@ -68,7 +82,7 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
             model = pickle.load(model_file)
 
         # TODO: Generate `predictions` with the test set predictions.
-        predictions = ...
+        predictions = model.predict(test.data)
 
         return predictions
 
