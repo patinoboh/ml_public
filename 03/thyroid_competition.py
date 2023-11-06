@@ -72,12 +72,12 @@ def get_model(data):
         [("preprocess", sklearn.compose.ColumnTransformer(
             [("onehot", sklearn.preprocessing.OneHotEncoder(handle_unknown='ignore', sparse_output=False), int_columns),
              ("scaler", sklearn.preprocessing.StandardScaler(), ~int_columns),])), 
-             ("poly", sklearn.preprocessing.PolynomialFeatures(3)) ]
+             ("poly", sklearn.preprocessing.PolynomialFeatures()) ]
         + model
         )
             
     cross_valid = sklearn.model_selection.StratifiedKFold(5)
-    params = {'algo__C': [100, 200, 500, 700], 'algo__penalty': ['l2', 'elasticnet'], 'algo__solver': ['liblinear'], 'poly__degree': [3]}
+    params = {'algo__C': [1, 100, 200], 'algo__penalty': ['l2', 'elasticnet'], 'algo__solver': ['liblinear'], 'poly__degree': [2, 3]}
     model = sklearn.model_selection.GridSearchCV(estimator=model, cv = cross_valid, param_grid=params, n_jobs=2, refit=True, verbose=10)
     return model
 
@@ -95,9 +95,9 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
 
         # TODO: Train a model on the given dataset and store it in `model`.                 
 
-        # train_data, test_data, train_target, test_target = sklearn.model_selection.train_test_split(dataset.data, dataset.target, test_size=1)
-        train_data = dataset.data
-        train_target = dataset.target
+        train_data, test_data, train_target, test_target = sklearn.model_selection.train_test_split(dataset.data, dataset.target, test_size=0.8)
+        #train_data = dataset.data
+        #train_target = dataset.target
 
         model = get_model(train_data)                        
         model.fit(train_data, train_target)

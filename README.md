@@ -42,3 +42,4 @@ Machine learning has become increasingly popular in recent years, due to the exp
 In conclusion, machine learning is a fascinating and rapidly evolving field that has the potential to revolutionize many aspects of our lives. By enabling computers to learn from data and make predictions or decisions, we can tackle complex problems and create intelligent systems that can assist us in a wide range of tasks.
 
 ![obrazok](https://i.itworldcanada.com/wp-content/uploads/2023/08/GettyImages-1448152453-696x391.jpg)
+
