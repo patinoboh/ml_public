@@ -12,7 +12,7 @@ import numpy.typing as npt
 
 import sklearn
 from sklearn.neural_network import MLPClassifier
-from sklearn.model_selection import ShuffleSplit
+import sklearn.pipeline
 
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
@@ -53,7 +53,13 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         # TODO: Train a model on the given dataset and store it in `model`.
         
         #MOZNO este scaler
-        model = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(2000), max_iter = 100, tol = 0, alpha = 0)
+        #tol=0
+        model = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(2000), max_iter = 100,  alpha = 0)
+        
+        model = sklearn.pipeline.Pipeline([
+            ("scaler", sklearn.preprocessing.MinMaxScaler()),
+            ("algo", model),
+        ])
         
         model.fit(train.data, train.target)
 
@@ -64,6 +70,9 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         #   for i in range(len(mlp.coefs_)): mlp.coefs_[i] = mlp.coefs_[i].astype(np.float16)
         #   for i in range(len(mlp.intercepts_)): mlp.intercepts_[i] = mlp.intercepts_[i].astype(np.float16)
         
+        
+        
+        model = model.named_steps["algo"]
         model._optimizer = None
         for i in range(len(model.coefs_)): model.coefs_[i] = model.coefs_[i].astype(np.float16)
         for i in range(len(model.intercepts_)): model.intercepts_[i] = model.intercepts_[i].astype(np.float16)
