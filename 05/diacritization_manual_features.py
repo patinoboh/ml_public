@@ -136,6 +136,12 @@ class DictModel:
 
         return np.array(allTargets)
 
+    @staticmethod
+    def oneHotPismenko(i):
+        res = np.zeros(27)
+        res[i] = 1
+        return res
+
     #ako vazne
     def makeFeatures(self, data: str):
         allFeatures = []
@@ -144,20 +150,22 @@ class DictModel:
           #po pismenkach
                 if line[spl].lower() in "acdeinorstuyz":
                     
-                    features = np.zeros(self.w)
+                    features = []
 
                     for f in range(self.w):
                     #okolo pismenka jak kokoto
                         pos = spl - (self.w-1)//2 + f
                     
                         if (pos < 0 or pos >= len(line)):#uuuuplny kokot
-                            features[f] = ord("z") - ord("a") + 1
+                            features.append(self.oneHotPismenko(26))
+                        if data[pos].lower() not in "abcdefghijklmnopqrstuvwxyz":
+                            features.append(self.oneHotPismenko(26))
                         else:#to vis
-                            features[f] = ord(data[pos].lower()) - ord("a")
+                            features.append(self.oneHotPismenko(ord(line[spl].lower())-ord("a")))
                     
                     allFeatures.append(features)
                     
-        return sklearn.preprocessing.OneHotEncoder().fit_transform(np.array(allFeatures))
+        return np.array(allFeatures)
               #a zajeb ho tam!!
 
 
