@@ -26,6 +26,10 @@ Martin Oravec
 
 1056cfa0-24fb-11ec-986f-f39926f24a9c
 
+Vladimir Vozar
+
+bb29abf7-2547-11ec-986f-f39926f24a9c
+
 
 # Essay from copilot
 
