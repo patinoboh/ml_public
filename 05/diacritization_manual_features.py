@@ -45,7 +45,7 @@ class DictModel:
     def __init__(self, window: int):
         self.w = window + (1 - window % 2) #chceme neparne velke okno
 
-        self.est = sklearn.neural_network.MLPClassifier(hidden_layer_sizes=(300,200,100))
+        self.est = sklearn.neural_network.MLPClassifier(hidden_layer_sizes=(5))
 
 
     def fit(self, data: str, target: str):
@@ -99,10 +99,7 @@ class DictModel:
             trans = str.maketrans("aeiouyAEIOUY", "áéíóúýÁÉÍÓÚÝ")
         
         elif pred == 2 and c.lower() in "cdenrstz":
-            trans = str.maketrans("cdenrstzCDENRSTZ", "čďěňřšťžČĎĚŇŘŠŤŽ")
-
-        elif pred == 3 and c.lower() == 'u':
-            trans = str.maketrans("uU", "ůŮ")
+            trans = str.maketrans("cdenrstuzCDENRSTUZ", "čďěňřšťůžČĎĚŇŘŠŤŮŽ")
         
         else:
             trans = str.maketrans("","")
@@ -119,12 +116,10 @@ class DictModel:
         assert len(c) == 1
         c = str.lower(c)
         if c in "áéíóúý":
-            return np.array([0,1,0,0])
-        if c in "čďěňřšťž":
-            return np.array([0,0,1,0])
-        if c == "ů":
-            return np.array([0,0,0,1])
-        return np.array([1,0,0,0])
+            return np.array([0,1,0])
+        if c in "čďěňřšťůž":
+            return np.array([0,0,1])
+        return np.array([1,0,0])
     
 #no to ma pojeb
     def makeTargets(self, target: str):
@@ -138,7 +133,7 @@ class DictModel:
 
     @staticmethod
     def oneHotPismenko(i):
-        res = np.zeros(27)
+        res = [0]*27
         res[i] = 1
         return res
 
@@ -157,14 +152,16 @@ class DictModel:
                         pos = spl - (self.w-1)//2 + f
                     
                         if (pos < 0 or pos >= len(line)):#uuuuplny kokot
-                            features.append(self.oneHotPismenko(26))
-                        if data[pos].lower() not in "abcdefghijklmnopqrstuvwxyz":
-                            features.append(self.oneHotPismenko(26))
+                            features += (self.oneHotPismenko(26))
+                        elif data[pos].lower() not in "abcdefghijklmnopqrstuvwxyz":
+                            features += (self.oneHotPismenko(26))
                         else:#to vis
-                            features.append(self.oneHotPismenko(ord(line[spl].lower())-ord("a")))
-                    
+                            features += (self.oneHotPismenko(ord(line[spl].lower())-ord("a")))
+                        
+                    if len(features)!=27*self.w:
+                        print(len(features))
                     allFeatures.append(features)
-                    
+        print(np.array(allFeatures).shape)
         return np.array(allFeatures)
               #a zajeb ho tam!!
 
