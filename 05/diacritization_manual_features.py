@@ -59,8 +59,11 @@ class DictModel:
     def predict(self, data: str):
         outputLines = []
         for line in data.split('\n'):
-            line_feat = self.makeFeatures(line)
-            line_pred = [maxInd(dist) for dist in self.est.predict(line_feat)]
+            line_feat = self.makeFeatures(line).reshape(-1,27*self.w)
+            if len(line_feat) == 0:
+                line_pred = []
+            else:
+                line_pred = [maxInd(dist) for dist in self.est.predict(line_feat)]
             outputLines.append(self.processLine(line, line_pred))
         return '\n'.join(outputLines)
     
