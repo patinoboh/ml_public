@@ -45,7 +45,7 @@ class DictModel:
     def __init__(self, window: int):
         self.w = window + (1 - window % 2) #chceme neparne velke okno
 
-        self.est = sklearn.neural_network.MLPClassifier(hidden_layer_sizes=(5))
+        self.est = sklearn.neural_network.MLPClassifier(hidden_layer_sizes=(100,100))
 
 
     def fit(self, data: str, target: str):
@@ -59,8 +59,11 @@ class DictModel:
     def predict(self, data: str):
         outputLines = []
         for line in data.split('\n'):
-            line_feat = self.makeFeatures(line)
-            line_pred = [maxInd(dist) for dist in self.est.predict(line_feat)]
+            line_feat = self.makeFeatures(line).reshape(-1,27*self.w)
+            if len(line_feat) == 0:
+                line_pred = []
+            else:
+                line_pred = [maxInd(dist) for dist in self.est.predict(line_feat)]
             outputLines.append(self.processLine(line, line_pred))
         return '\n'.join(outputLines)
     
@@ -158,10 +161,7 @@ class DictModel:
                         else:#to vis
                             features += (self.oneHotPismenko(ord(line[spl].lower())-ord("a")))
                         
-                    if len(features)!=27*self.w:
-                        print(len(features))
                     allFeatures.append(features)
-        print(np.array(allFeatures).shape)
         return np.array(allFeatures)
               #a zajeb ho tam!!
 
@@ -186,7 +186,8 @@ words = pred.split(' ')
 golds = ("\n".join(test_target)).split(" ")
 
 #vypise kokotiny
-for i in len(test_target.split(' ')):
-    print(words[i],golds[i])
+for i in range(len(words)):
+    if words[i] not in model.dictionary:
+        print(words[i],golds[i])
 
 
