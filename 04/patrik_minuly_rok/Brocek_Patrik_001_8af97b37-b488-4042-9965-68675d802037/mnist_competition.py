@@ -49,7 +49,7 @@ class Dataset:
 
 def create_model():
     standard_scaler = sklearn.preprocessing.StandardScaler()
-    algo = sklearn.neural_network.MLPClassifier(hidden_layer_sizes=(200,100))
+    algo = sklearn.neural_network.MLPClassifier(hidden_layer_sizes=(2000,100))
 
     cross_valid = sklearn.model_selection.StratifiedKFold(5)
 
