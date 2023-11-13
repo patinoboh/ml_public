@@ -9,7 +9,7 @@ Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?4300
 
 # TODO 
 
-1. Spraviť mega brutal model pre task **thyroid_competition.py**
+1. Spraviť mega brutal model pre task **diacritization.py**
 
 
 # Tagy
