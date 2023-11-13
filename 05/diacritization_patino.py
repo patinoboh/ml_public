@@ -60,7 +60,7 @@ class Dataset:
                 if(i+offset < 0 or i + offset >= len(data)):
                     feature.append(" ") # TODO co tam appendnut, ak sme na kraji?
                 else:
-                    feature.append(data[i-offset])
+                    feature.append(data[i+offset])
             features.append(feature)
             if targets[i] in "áéíóúý":
                 target_features.append(1)
@@ -78,74 +78,46 @@ class Dataset:
 # 3. najebat tam brutal model a eskere
 # 4. dorobit dalsie features - pridat n-gramy
 
-
-def get_predictions(model, data):
-    # window_size musi byt hyperparameter aj pre tuto funkciu
-    # toto sa mi ale vobec nechce
-    # lebo pre prediction toho modelu mu musime poslat ten oneHot list susedov a to je pain
-    # ?? da sa dať na model nejaký .fit_transform?
-    #hmm nepoznam take  
-      
-    window_size = 5
-    predictions = []
-    lower = data.lower()    
+def prediction(model,data):
     
-    lower.append([" "]* window_size)
-    lower.insert(0, [" "]* window_size)    
+    #data.target = data.data    
     
-    data.append([" "]* window_size)
-    data.insert(0, [" "]* window_size)
+    features, _ = data.get_features()
     
+    new_targets = model.predict(features)
+    # ale nevieme aky tvar ma to 
+    # new_targets
+    predictions = list(data.data)
     
 
-    for i in range(window_size, len(data) - window_size):
-        letter = data[i]
-        if(i.lower() not in data.LETTERS_NO_DIA):
-            predictions.append(letter)
-        else:
-            prediction_vector =[lower[i]] + list(lower[i - window_size : i + window_size + 1])
-            # TODO ako upraviť tento vektor na oneHot?                        
-            # TODO pridat na zaciatok PADDING a koniec data s nulovym znakom
-            # ten zac a koniec treba?
-            # hej lebo som s nim nic nerobil kurva fix
-            # idem to spravit to bude ok
-
-
- #         ORI si mysli ze  by tam mal byt len .transform() a mali by sme mat oddelleny transformer a model teda algoritmus ako  
-            prediction_vector = model.predict(prediction_vector) # SNAAAD TODO
-            # co teda este s tymto oneHot
-            # ten bude ok len musim zmenit aby som cyclil cez tie data s offsetom, dumam a nejde mi to pockaj 
-            correction = model.predict(prediction_vector)
-            corrected_letter = ""
-            if correction == 0:
-                predictions.append(letter)
-            elif correction == 1:
-                basic = "aeiouyAEIOUY"
-                dĺžne = "áéíóúýÁÉÍÓÚÝ"
-                corrected_letter = dĺžne[basic.index(letter)]
-            elif correction == 2:
-                normálne_písmen = "cdenrstuzCDENRSTUZ"
-                mäkčene_a_vôkáň = "čďěňřšťůžČĎĚŇŘŠŤuŽ" # neviem napísať veľký vokáň (ak existuje)
-                corrected_letter = mäkčene_a_vôkáň[normálne_písmen.index(letter)]
-            predictions.append(corrected_letter)                    
-    
+    index_to_letter_correction = 0
+    for i, letter in enumerate(data.data):
+        if(letter.lower() not in data.LETTERS_NODIA):
+            continue
+        corrected_letter = predictions[i]
+        if new_targets[index_to_letter_correction] == 1:
+            basic = "aeiouyAEIOUY"
+            dĺžne = "áéíóúýÁÉÍÓÚÝ"
+            corrected_letter = dĺžne[basic.index(letter)]
+        elif new_targets[index_to_letter_correction] == 2:
+            normálne_písmen = "cdenrstuzCDENRSTUZ"
+            mäkčene_a_vôkáň = "čďěňřšťůžČĎĚŇŘŠŤŮŽ"
+            corrected_letter = mäkčene_a_vôkáň[normálne_písmen.index(letter)]
+        predictions[i]=corrected_letter 
+        index_to_letter_correction += 1
+        
     return predictions
 
 
 def get_model():
-
-
     # model =sklearn.linear_model.LogisticRegression(verbose = 100, solver = 'saga', max_iter = 100)
-    model = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(10), max_iter = 10)
+    model = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(500), max_iter = 100)
 
     model = sklearn.pipeline.Pipeline([
             ("scaler", sklearn.preprocessing.OneHotEncoder(handle_unknown='ignore')),
             ("algo", model),
         ]) 
     return model
-    
-    
-    
 
 def main(args: argparse.Namespace) -> Optional[str]:
     if args.predict is None:
@@ -153,28 +125,31 @@ def main(args: argparse.Namespace) -> Optional[str]:
         np.random.seed(args.seed)
         train = Dataset()
 
-        model = get_model()                
+        model = get_model()                        
         features, targets = train.get_features()
         # split the data into train and target
         features_train, features_test, targets_train, targets_test = sklearn.model_selection.train_test_split(
             features, 
-            targets, test_size=1)
+            targets, test_size=0.9)
         
-        model.fit(features, targets)
-        # model.fit(features_train, targets_train)        
-        # predictions = model.predict(features_test)
+        model.fit(features_train, targets_train)
         
-        # differences = sum(a != b for a, b in zip(predictions, targets_test))
-        # print(differences)    
+        pred = prediction(model, train)
+                
+        # print pred into a file
+        with open("predikcie.txt", "w") as f:
+            for letter in pred:
+                f.write(letter)
+
+        differences = sum(a != b for a, b in zip(pred, train.target))
+        print(differences)    
         
-        """
-        TOTO ak budeme robit mlp (y) huh
-        
+        #TOTO ak budeme robit mlp
         model = model.named_steps["algo"]
         model._optimizer = None
         for i in range(len(model.coefs_)): model.coefs_[i] = model.coefs_[i].astype(np.float16)
         for i in range(len(model.intercepts_)): model.intercepts_[i] = model.intercepts_[i].astype(np.float16)
-        """
+        
 
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
@@ -188,7 +163,7 @@ def main(args: argparse.Namespace) -> Optional[str]:
         with lzma.open(args.model_path, "rb") as model_file:
             model = pickle.load(model_file)
         
-        predictions = model.get_predictions(model, test.data)
+        predictions = prediction(model, test)
         
         return predictions
 

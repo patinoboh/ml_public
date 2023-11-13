@@ -62,7 +62,7 @@ class Dataset:
         elif target_mode == "marks":
             if letter in "áéíóúý":
                 return 1
-            if letter in "čďěňřšťůž":
+            if letter intargets "čďěňřšťůž":
                 return 2
             return 0
 
