@@ -4,7 +4,7 @@ Firstly you might need to install [Live Share](https://marketplace.visualstudio.
 
 Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?AB9478B03135308D579D1ADFE3212104715F) to collaborate real time.
 
-[Rastov link](https://prod.liveshare.vsengsaas.visualstudio.com/join?3A317AB245D853BB44D72D6587DF6B51C455)
+[Rastov link](https://prod.liveshare.vsengsaas.visualstudio.com/join?FA81095BBE0511065DEA9EBE284636B6C429)
 
 
 # TODO 

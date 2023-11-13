@@ -75,7 +75,7 @@ class Dataset:
 # TODO 
 # 1. neviem ci funguju predictions ale sak to lahko zistime
 # 2. upravit window_size aby sme ju mohli menit len na jednom mieste
-# 3. najebat tam brutal model a eskere
+# 3. dat tam brutal model a eskere
 # 4. dorobit dalsie features - pridat n-gramy
 
 def prediction(model,data):
@@ -90,18 +90,20 @@ def prediction(model,data):
     predictions = list(data.data)
     
 
+    basic = "aeiouyAEIOUY"
+    dĺžne = "áéíóúýÁÉÍÓÚÝ"
+    normálne_písmen = "cdenrstuzCDENRSTUZ"
+    mäkčene_a_vôkáň = "čďěňřšťůžČĎĚŇŘŠŤŮŽ"
+    
     index_to_letter_correction = 0
     for i, letter in enumerate(data.data):
         if(letter.lower() not in data.LETTERS_NODIA):
             continue
         corrected_letter = predictions[i]
-        if new_targets[index_to_letter_correction] == 1:
-            basic = "aeiouyAEIOUY"
-            dĺžne = "áéíóúýÁÉÍÓÚÝ"
+        if new_targets[index_to_letter_correction] == 1 and letter in basic:
+            #print(letter, new_targets[index_to_letter_correction])
             corrected_letter = dĺžne[basic.index(letter)]
-        elif new_targets[index_to_letter_correction] == 2:
-            normálne_písmen = "cdenrstuzCDENRSTUZ"
-            mäkčene_a_vôkáň = "čďěňřšťůžČĎĚŇŘŠŤŮŽ"
+        elif new_targets[index_to_letter_correction] == 2 and letter in normálne_písmen:
             corrected_letter = mäkčene_a_vôkáň[normálne_písmen.index(letter)]
         predictions[i]=corrected_letter 
         index_to_letter_correction += 1
@@ -128,21 +130,20 @@ def main(args: argparse.Namespace) -> Optional[str]:
         model = get_model()                        
         features, targets = train.get_features()
         # split the data into train and target
-        features_train, features_test, targets_train, targets_test = sklearn.model_selection.train_test_split(
-            features, 
-            targets, test_size=0.9)
+        #features_train, features_test, targets_train, targets_test = sklearn.model_selection.train_test_split(
+         #   features, 
+          #  targets, test_size=0.9)
         
-        model.fit(features_train, targets_train)
-        
-        pred = prediction(model, train)
+        model.fit(features, targets)
+
                 
         # print pred into a file
-        with open("predikcie.txt", "w") as f:
-            for letter in pred:
-                f.write(letter)
+        #with open("predikcie.txt", "w") as f:
+         #   for letter in pred:
+          #      f.write(letter)
 
-        differences = sum(a != b for a, b in zip(pred, train.target))
-        print(differences)    
+        #differences = sum(a != b for a, b in zip(pred, train.target))
+        #print(differences)    
         
         #TOTO ak budeme robit mlp
         model = model.named_steps["algo"]
