@@ -12,6 +12,7 @@ import sklearn
 import sklearn.pipeline
 import sklearn.neural_network
 import sklearn.linear_model
+import sklearn.preprocessing
 
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
@@ -22,9 +23,6 @@ parser.add_argument("--recodex", default=False, action="store_true", help="Runni
 parser.add_argument("--seed", default=42, type=int, help="Random seed")
 # For these and any other arguments you add, ReCodEx will keep your default value.
 parser.add_argument("--model_path", default="diacritization.model", type=str, help="Model path")
-
-
-# patrik first try
 
 class Dataset:
     LETTERS_NODIA = "acdeeinorstuuyz"
@@ -54,13 +52,17 @@ class Dataset:
         features, target_features = [], []
         for i, letter in enumerate(data):            
             if(letter not in self.LETTERS_NODIA):
-                continue # sorry ale fakt sa to inak nedá napísať            
+                continue
             feature = [letter]
             for offset in list(range(-window_size, 0)) + list(range(1, window_size+1)):
                 if(i+offset < 0 or i + offset >= len(data)):
                     feature.append(" ") # TODO co tam appendnut, ak sme na kraji?
                 else:
-                    feature.append(data[i+offset])
+                    # sem treba dat if ci to je pismenko
+                    if(data[i + offset].lower() in "abcdefghijklmnopqrstuvwxyz.,\n"):
+                        feature.append(data[i+offset])
+                    else:
+                        feature.append(" ") # TODO co tam appendnut, ak sme na kraji?
             features.append(feature)
             if targets[i] in "áéíóúý":
                 target_features.append(1)
@@ -82,18 +84,17 @@ def prediction(model,data):
     
     #data.target = data.data    
     
+    data.target = data.data
     features, _ = data.get_features()
     
     new_targets = model.predict(features)
-    # ale nevieme aky tvar ma to 
-    # new_targets
-    predictions = list(data.data)
     
+    predictions = list(data.data)
 
     basic = "aeiouyAEIOUY"
-    dĺžne = "áéíóúýÁÉÍÓÚÝ"
-    normálne_písmen = "cdenrstuzCDENRSTUZ"
-    mäkčene_a_vôkáň = "čďěňřšťůžČĎĚŇŘŠŤŮŽ"
+    dlzne = "áéíóúýÁÉÍÓÚÝ"
+    normalne_pismen = "cdenrstuzCDENRSTUZ"
+    makcene_a_vokan = "čďěňřšťůžČĎĚŇŘŠŤŮŽ"
     
     index_to_letter_correction = 0
     for i, letter in enumerate(data.data):
@@ -102,17 +103,21 @@ def prediction(model,data):
         corrected_letter = predictions[i]
         if new_targets[index_to_letter_correction] == 1 and letter in basic:
             #print(letter, new_targets[index_to_letter_correction])
-            corrected_letter = dĺžne[basic.index(letter)]
-        elif new_targets[index_to_letter_correction] == 2 and letter in normálne_písmen:
-            corrected_letter = mäkčene_a_vôkáň[normálne_písmen.index(letter)]
+            corrected_letter = dlzne[basic.index(letter)]
+        elif new_targets[index_to_letter_correction] == 2 and letter in normalne_pismen:
+            corrected_letter = makcene_a_vokan[normalne_pismen.index(letter)]
         predictions[i]=corrected_letter 
         index_to_letter_correction += 1
         
+    predictions = "".join(predictions)
     return predictions
 
 
 def get_model():
     # model =sklearn.linear_model.LogisticRegression(verbose = 100, solver = 'saga', max_iter = 100)
+    
+    ###este tol=0
+    
     model = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(500), max_iter = 100)
 
     model = sklearn.pipeline.Pipeline([
@@ -128,28 +133,25 @@ def main(args: argparse.Namespace) -> Optional[str]:
         train = Dataset()
 
         model = get_model()                        
-        features, targets = train.get_features()
-        # split the data into train and target
-        #features_train, features_test, targets_train, targets_test = sklearn.model_selection.train_test_split(
-         #   features, 
-          #  targets, test_size=0.9)
-        
+        features, targets = train.get_features()        
         model.fit(features, targets)
-
-                
+        
+        #pred = prediction(model, train)
+        
         # print pred into a file
         #with open("predikcie.txt", "w") as f:
-         #   for letter in pred:
-          #      f.write(letter)
+           # for letter in pred:
+            #    f.write(letter)
 
         #differences = sum(a != b for a, b in zip(pred, train.target))
         #print(differences)    
         
         #TOTO ak budeme robit mlp
-        model = model.named_steps["algo"]
-        model._optimizer = None
-        for i in range(len(model.coefs_)): model.coefs_[i] = model.coefs_[i].astype(np.float16)
-        for i in range(len(model.intercepts_)): model.intercepts_[i] = model.intercepts_[i].astype(np.float16)
+        #model = model["algo"]
+        #model = model.named_steps["algo"]
+        #model._optimizer = None
+        #for i in range(len(model.coefs_)): model.coefs_[i] = model.coefs_[i].astype(np.float16)
+        #for i in range(len(model.intercepts_)): model.intercepts_[i] = model.intercepts_[i].astype(np.float16)
         
 
         # Serialize the model.
@@ -170,10 +172,21 @@ def main(args: argparse.Namespace) -> Optional[str]:
 
         # TODO: Generate `predictions` with the test set predictions. Specifically,
         # produce a diacritized `str` with exactly the same number of words as `test.data`.
-        
-        
-
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
     main(args)
+    
+    
+    
+# Rasto Nowak
+
+# 6a81285c-247a-11ec-986f-f39926f24a9c
+
+# Patrik Brocek
+
+# 5ccdc432-238f-11ec-986f-f39926f24a9c
+
+# Martin Oravec
+
+# 1056cfa0-24fb-11ec-986f-f39926f24a9c
