@@ -16,8 +16,6 @@ import sklearn.preprocessing
 
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
-# add binary argument
-# parser.add_argument("--pred", default=False, action="store_true", help="Use binary features")
 parser.add_argument("--predict", default=None, type=str, help="Path to the dataset to predict")
 parser.add_argument("--recodex", default=False, action="store_true", help="Running in ReCodEx")
 parser.add_argument("--seed", default=42, type=int, help="Random seed")
@@ -47,6 +45,7 @@ class Dataset:
     
     def get_features(self):
         window_size = 5            # to each side
+        ngram_size = 6
         data = self.data.lower()
         targets = self.target.lower()
         features, target_features = [], []
@@ -63,7 +62,13 @@ class Dataset:
                         feature.append(data[i+offset])
                     else:
                         feature.append(" ") # TODO co tam appendnut, ak sme na kraji?
+
+            for ngram in range(2, ngram_size + 1):
+                for o in range(ngram):
+                    feature.append( data[max(0, i - o) : min(len(data), i - o + ngram_size)])
+
             features.append(feature)
+            
             if targets[i] in "áéíóúý":
                 target_features.append(1)
             elif targets[i] in "čďěňřšťůž":
@@ -73,16 +78,7 @@ class Dataset:
             
         return features, target_features
 
-
-# TODO 
-# 1. neviem ci funguju predictions ale sak to lahko zistime
-# 2. upravit window_size aby sme ju mohli menit len na jednom mieste
-# 3. dat tam brutal model a eskere
-# 4. dorobit dalsie features - pridat n-gramy
-
-def prediction(model,data):
-    
-    #data.target = data.data    
+def prediction(model,data): 
     
     data.target = data.data
     features, _ = data.get_features()
@@ -102,7 +98,6 @@ def prediction(model,data):
             continue
         corrected_letter = predictions[i]
         if new_targets[index_to_letter_correction] == 1 and letter in basic:
-            #print(letter, new_targets[index_to_letter_correction])
             corrected_letter = dlzne[basic.index(letter)]
         elif new_targets[index_to_letter_correction] == 2 and letter in normalne_pismen:
             corrected_letter = makcene_a_vokan[normalne_pismen.index(letter)]
@@ -113,12 +108,11 @@ def prediction(model,data):
     return predictions
 
 
+
 def get_model():
-    # model =sklearn.linear_model.LogisticRegression(verbose = 100, solver = 'saga', max_iter = 100)
+    model =sklearn.linear_model.LogisticRegression(verbose = 100, solver = 'saga', max_iter = 100, tol =0)
     
-    ###este tol=0
-    
-    model = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(500), max_iter = 100)
+    #model = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(500), max_iter = 100, tol=0)
 
     model = sklearn.pipeline.Pipeline([
             ("scaler", sklearn.preprocessing.OneHotEncoder(handle_unknown='ignore')),
@@ -144,7 +138,9 @@ def main(args: argparse.Namespace) -> Optional[str]:
             #    f.write(letter)
 
         #differences = sum(a != b for a, b in zip(pred, train.target))
-        #print(differences)    
+        #print(differences)  
+        
+          
         
         #TOTO ak budeme robit mlp
         #model = model["algo"]
@@ -166,12 +162,12 @@ def main(args: argparse.Namespace) -> Optional[str]:
         with lzma.open(args.model_path, "rb") as model_file:
             model = pickle.load(model_file)
         
+        # TODO: Generate `predictions` with the test set predictions. Specifically,
+        # produce a diacritized `str` with exactly the same number of words as `test.data`.
+        
         predictions = prediction(model, test)
         
         return predictions
-
-        # TODO: Generate `predictions` with the test set predictions. Specifically,
-        # produce a diacritized `str` with exactly the same number of words as `test.data`.
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
