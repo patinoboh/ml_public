@@ -126,7 +126,25 @@ def prediction(model,data):
     return predictions
 
 def predictions(model,data):
-    x
+    dictionary = Dictionary()
+    
+    #co to ma ako znamenat
+    #data.target = data.data
+    
+    features, _ = data.get_features()
+    
+    new_targets = model.predict_log_proba(features)
+    
+    #predictions = list(data.data)
+    
+    for line in data.data.split("\n"):
+        for word in line.split(" "):
+            if word in dictionary.variants:
+                daco
+            else:
+                nieco
+    
+    
 
 def get_model():
     model =sklearn.linear_model.LogisticRegression(verbose = 100, solver = 'saga', max_iter = 100, tol =0)
