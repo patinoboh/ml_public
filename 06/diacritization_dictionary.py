@@ -96,34 +96,33 @@ class Dataset:
             
         return features, target_features
 
-def prediction(model,data): 
-    
-    data.target = data.data
-    features, _ = data.get_features()
-    
-    new_targets = model.predict(features)
-    
-    predictions = list(data.data)
-
+def letter_to_mark(letter):
     basic = "aeiouyAEIOUY"
     dlzne = "áéíóúýÁÉÍÓÚÝ"
     normalne_pismen = "cdenrstuzCDENRSTUZ"
     makcene_a_vokan = "čďěňřšťůžČĎĚŇŘŠŤŮŽ"
+    if(letter in makcene_a_vokan):
+        return 2
+    elif(letter in dlzne):
+        return 1
+    return 0
+
+def mark_to_letter(letter, mark):
+    basic = "aeiouyAEIOUY"
+    dlzne = "áéíóúýÁÉÍÓÚÝ"
+    normalne_pismen = "cdenrstuzCDENRSTUZ"    
+    makcene_a_vokan = "čďěňřšťůžČĎĚŇŘŠŤŮŽ"
+    LETTERS_NODIA = "acdeeinorstuuyz"
     
-    index_to_letter_correction = 0
-    for i, letter in enumerate(data.data):
-        if(letter.lower() not in data.LETTERS_NODIA):
-            continue
-        corrected_letter = predictions[i]
-        if new_targets[index_to_letter_correction] == 1 and letter in basic:
-            corrected_letter = dlzne[basic.index(letter)]
-        elif new_targets[index_to_letter_correction] == 2 and letter in normalne_pismen:
-            corrected_letter = makcene_a_vokan[normalne_pismen.index(letter)]
-        predictions[i]=corrected_letter 
-        index_to_letter_correction += 1
-        
-    predictions = "".join(predictions)
-    return predictions
+    if(letter.lower() not in LETTERS_NODIA):
+        return letter
+    if(mark == 2):
+        return letter.translate(letter.maketrans(normalne_pismen, makcene_a_vokan))
+    elif(mark == 1):
+        return letter.translate(letter.maketrans(basic, dlzne))
+    else:
+        return letter
+
 
 def predictions(model,data):
     dictionary = Dictionary()
@@ -131,20 +130,69 @@ def predictions(model,data):
     #co to ma ako znamenat
     #data.target = data.data
     
-    features, _ = data.get_features()
+
+
+    features, _ = data.get_features()    
+
+    new_targets = model.predict_log_proba(features) # [[0,1,2]]
+    max_labels = model.predict(features) #[1,]
+    # toto ^ [[0.0, 0.1, 0.9] <-- pre prve opravitelne pismenko,[0,1,2]...]
+
+
+    characterizable_points = np.array(list(data.data)) != np.array(list(data.data.translate(data.DIA_TO_NODIA, "~")))
+    indices = np.where(characterizable_points)[0] # array indexov diakritizovatelnych pismen
+    # indices[2] = index tretieho diakritizovatelneho pismena v texte
+    # np.where(indices == 48)[0] = kolke pismeno je diakritizovatelne pismeno v texte na indexe 48
     
-    new_targets = model.predict_log_proba(features)
+
+    predictions = ""
     
-    #predictions = list(data.data)
+    #new_targets_index = 0
     
+    i = 0
     for line in data.data.split("\n"):
-        for word in line.split(" "):
+        for word in line.split(" "): 
+            predicted_word = ""
             if word in dictionary.variants:
-                daco
+                best_variant_score = 0
+                for variant in dictionary.variants[word]:
+                    variant_score=0
+                    index = i
+                    for index_pismenka in len(word):
+                        
+                        if(variant[index_pismenka].lower() not in data.LETTERS_NODIA):
+                            continue
+
+                        index_v_predictions = np.where(indices == index)[0]
+                        mark = letter_to_mark(variant[index_pismenka])
+                        
+                        probab_distribution = new_targets[index_v_predictions]                 
+
+                        variant_score += probab_distribution[mark]
+                        
+                        index += 1
+                        
+                    if variant_score > best_variant_score:
+                        predicted_word= variant
+                        best_variant_score = variant_score
+                predictions += predicted_word
             else:
-                nieco
+                index = i
+                for pismenko in word:
+                    if(pismenko.lower() not in data.LETTERS_NODIA):       
+                        predictions += pismenko
+                        continue
+                    prediction += mark_to_letter(pismenko, max_labels[index])
+
+                index += 1
+                
+            i += len(word) + 1
+            predictions += " "
+            
+        predictions += "\n"
     
-    
+    return predictions
+
 
 def get_model():
     model =sklearn.linear_model.LogisticRegression(verbose = 100, solver = 'saga', max_iter = 100, tol =0)
@@ -167,7 +215,7 @@ def test_model(model, dataset):
     model.fit(features, targets)
     dataset.data, dataset.target = test_data, test_target
     features, targets = dataset.get_features()
-    prediction = prediction(model, features)    
+    prediction = predictions(model, features)    
     print("Accuracy: {}".format(np.sum(list(prediction) == list(targets))))
 
     return model
@@ -182,22 +230,19 @@ def main(args: argparse.Namespace) -> Optional[str]:
         train = Dataset()
 
 
-        dict = Dictionary()
-        # how to index to this dictionary
-        # print(dict.variants["
-        print ("halo")
-        # test_model(model, train)
-        # 
-        # model = get_model()
+        #print ("halo")
         
-        # model = test_model(model, train)
-        # features, targets = train.get_features()        
-        # model.fit(features, targets)
+        model = get_model()
+        features, targets = train.get_features()
+
+        # test_model(model, train)
+        model.fit(features, targets)
+            
 
 
-        # Serialize the model.
-        # with lzma.open(args.model_path, "wb") as model_file:
-        #     pickle.dump(model, model_file)
+        #Serialize the model.
+        with lzma.open(args.model_path, "wb") as model_file:
+            pickle.dump(model, model_file)
 
     else:
         # Use the model and return test set predictions.
