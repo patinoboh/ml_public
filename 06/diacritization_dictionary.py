@@ -127,19 +127,13 @@ def mark_to_letter(letter, mark):
 def predictions(model,data):
     dictionary = Dictionary()
     
-    #co to ma ako znamenat
-    #data.target = data.data
-    
-
-
     features, _ = data.get_features()    
 
-    new_targets = model.predict_log_proba(features) # [[0,1,2]]
-    max_labels = model.predict(features) #[1,]
-    # toto ^ [[0.0, 0.1, 0.9] <-- pre prve opravitelne pismenko,[0,1,2]...]
+    new_targets = model.predict_log_proba(features) # new_targets[0] = [-0.025, -3.67, -10.28]
+    max_labels = model.predict(features) #[1, 0, 2]
 
 
-    characterizable_points = np.array(list(data.data)) != np.array(list(data.data.translate(data.DIA_TO_NODIA, "~")))
+    characterizable_points = np.array(list(data.data)) != np.array(list(data.data.translate(data.data.maketrans("aeiouyAEIOUYcdenrstuzCDENRSTUZ", 30 * "~"))))
     indices = np.where(characterizable_points)[0] # array indexov diakritizovatelnych pismen
     # indices[2] = index tretieho diakritizovatelneho pismena v texte
     # np.where(indices == 48)[0] = kolke pismeno je diakritizovatelne pismeno v texte na indexe 48
@@ -158,12 +152,16 @@ def predictions(model,data):
                 for variant in dictionary.variants[word]:
                     variant_score=0
                     index = i
-                    for index_pismenka in len(word):
+                    for index_pismenka in range(len(word)):
                         
                         if(variant[index_pismenka].lower() not in data.LETTERS_NODIA):
                             continue
 
-                        index_v_predictions = np.where(indices == index)[0]
+                        print("pred index neviem : len indices, index : ", len(indices), " ", index)
+                        index_v_predictions = np.where(indices == index)[0][0]
+                        print("za index neviem ", index_v_predictions)
+
+                        
                         mark = letter_to_mark(variant[index_pismenka])
                         
                         probab_distribution = new_targets[index_v_predictions]                 
@@ -171,7 +169,7 @@ def predictions(model,data):
                         variant_score += probab_distribution[mark]
                         
                         index += 1
-                        
+                                            
                     if variant_score > best_variant_score:
                         predicted_word= variant
                         best_variant_score = variant_score
@@ -182,9 +180,9 @@ def predictions(model,data):
                     if(pismenko.lower() not in data.LETTERS_NODIA):       
                         predictions += pismenko
                         continue
-                    prediction += mark_to_letter(pismenko, max_labels[index])
+                    predictions += mark_to_letter(pismenko, max_labels[index])
+                    index += 1
 
-                index += 1
                 
             i += len(word) + 1
             predictions += " "
@@ -195,7 +193,7 @@ def predictions(model,data):
 
 
 def get_model():
-    model =sklearn.linear_model.LogisticRegression(verbose = 100, solver = 'saga', max_iter = 100, tol =0)
+    model =sklearn.linear_model.LogisticRegression(verbose = 10, solver = 'saga', max_iter = 10, tol =0)
     
     #model = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(500), max_iter = 100, tol=0)
 
@@ -209,13 +207,19 @@ def get_model():
 def test_model(model, dataset):
     # split the data into train and test
     data, target = dataset.data, dataset.target
-    train_data, test_data, train_target, test_target = sklearn.model_selection.train_test_split(data, target, test_size=0.2, random_state=42)    
+
+    # train_data, test_data = data[:int(len(data)*0.8)], data[int(len(data)*0.8):], 
+    # train_target, test_target = target[:int(len(data)*0.8)], target[int(len(data)*0.8):]
+
+    train_data, test_data = data[:int(len(data)*0.1)], data[int(len(data)*0.9):], 
+    train_target, test_target = target[:int(len(data)*0.1)], target[int(len(data)*0.9):]
+    
     dataset.data, dataset.target = train_data, train_target
     features, targets = dataset.get_features()
     model.fit(features, targets)
     dataset.data, dataset.target = test_data, test_target
     features, targets = dataset.get_features()
-    prediction = predictions(model, features)    
+    prediction = predictions(model, dataset)
     print("Accuracy: {}".format(np.sum(list(prediction) == list(targets))))
 
     return model
@@ -235,12 +239,13 @@ def main(args: argparse.Namespace) -> Optional[str]:
         model = get_model()
         features, targets = train.get_features()
 
-        # test_model(model, train)
-        model.fit(features, targets)
+        test_model(model, train)
+        # model.fit(features, targets)
             
 
 
         #Serialize the model.
+        args.model_path = "patino_skuska.model"        
         with lzma.open(args.model_path, "wb") as model_file:
             pickle.dump(model, model_file)
 
