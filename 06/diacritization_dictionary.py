@@ -164,19 +164,22 @@ def main(args: argparse.Namespace) -> Optional[str]:
         train = Dataset()
 
 
-
-        test_model(model, train)
+        dict = Dictionary()
+        # how to index to this dictionary
+        # print(dict.variants["
+        print ("halo")
+        # test_model(model, train)
+        # 
+        # model = get_model()
         
-        model = get_model()
-        
-        model = test_model(model, train)
+        # model = test_model(model, train)
         # features, targets = train.get_features()        
         # model.fit(features, targets)
 
 
         # Serialize the model.
-        with lzma.open(args.model_path, "wb") as model_file:
-            pickle.dump(model, model_file)
+        # with lzma.open(args.model_path, "wb") as model_file:
+        #     pickle.dump(model, model_file)
 
     else:
         # Use the model and return test set predictions.
