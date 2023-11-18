@@ -21,11 +21,11 @@ parser.add_argument("--recodex", default=False, action="store_true", help="Runni
 parser.add_argument("--seed", default=42, type=int, help="Random seed")
 # For these and any other arguments you add, ReCodEx will keep your default value.
 
-# parser.add_argument("--model_path", default="diacritization.model", type=str, help="Model path")
-# parser.add_argument("--predict", default=None, type=str, help="Path to the dataset to predict")
-
+parser.add_argument("--model_path", default="diacritization.model", type=str, help="Model path")
 parser.add_argument("--predict", default=None, type=str, help="Path to the dataset to predict")
-parser.add_argument("--model_path", default="patino_skuska.model", type=str, help="Model path")
+
+# parser.add_argument("--predict", default=None, type=str, help="Path to the dataset to predict")
+# parser.add_argument("--model_path", default="patino_skuska.model", type=str, help="Model path")
 
 
 class Dictionary:
@@ -188,7 +188,7 @@ def predictions(model, data):
 def get_model():
     model =sklearn.linear_model.LogisticRegression(verbose = 100, solver = 'saga', max_iter = 100, tol =0)
     
-    #model = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(500), max_iter = 100, tol=0)
+    # model = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(500), max_iter = 100, tol=0)
 
     model = sklearn.pipeline.Pipeline([
             ("scaler", sklearn.preprocessing.OneHotEncoder(handle_unknown='ignore')),
@@ -224,37 +224,34 @@ def test_model(model, dataset):
 
 
 def main(args: argparse.Namespace) -> Optional[str]:
-
-    args.predict = True
     if args.predict is None:
         # We are training a model.
         np.random.seed(args.seed)
         train = Dataset()
 
         # T E S T
-        model = get_model()
-        test_model(model, train)
+        # model = get_model()
+        # test_model(model, train)
         
         # T R A I N
-        # model = get_model()
-        # features, targets = train.get_features()
-        # model.fit(features, targets)
+        model = get_model()
+        features, targets = train.get_features()
+        model.fit(features, targets)
 
         #Serialize the model.
-        args.model_path = "patino_skuska.model"
         with lzma.open(args.model_path, "wb") as model_file:
             pickle.dump(model, model_file)
     else:
         # Use the model and return test set predictions.
         
-        # test = Dataset(args.predict)
-        test = Dataset()
+        test = Dataset(args.predict)
 
         with lzma.open(args.model_path, "rb") as model_file:
             model = pickle.load(model_file)                
                 
-        test_model(model, test)
-        # predictions = predictions(model, test)        
+        # test_model(model, test)
+        predictions = predictions(model, test)
+
         return predictions
 
 if __name__ == "__main__":
