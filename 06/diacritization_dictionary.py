@@ -17,11 +17,16 @@ import sklearn.preprocessing
 
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
-parser.add_argument("--predict", default=None, type=str, help="Path to the dataset to predict")
 parser.add_argument("--recodex", default=False, action="store_true", help="Running in ReCodEx")
 parser.add_argument("--seed", default=42, type=int, help="Random seed")
 # For these and any other arguments you add, ReCodEx will keep your default value.
-parser.add_argument("--model_path", default="diacritization.model", type=str, help="Model path")
+
+# parser.add_argument("--model_path", default="diacritization.model", type=str, help="Model path")
+# parser.add_argument("--predict", default=None, type=str, help="Path to the dataset to predict")
+
+parser.add_argument("--predict", default=None, type=str, help="Path to the dataset to predict")
+parser.add_argument("--model_path", default="patino_skuska.model", type=str, help="Model path")
+
 
 class Dictionary:
     def __init__(self,
@@ -128,9 +133,8 @@ def predictions(model,data):
     dictionary = Dictionary()
     
     features, _ = data.get_features()    
-
-    new_targets = model.predict_log_proba(features) # new_targets[0] = [-0.025, -3.67, -10.28]
-    max_labels = model.predict(features) #[1, 0, 2]
+    new_targets = model.predict_log_proba(features) # TODO takto vyzeraju tieto data : new_targets[0] = [-0.025, -3.67, -10.28]
+    max_labels = model.predict(features) # toto je dobre proste tak ako doteraz max_labels[:3] = [1, 0, 2]
 
 
     characterizable_points = np.array(list(data.data)) != np.array(list(data.data.translate(data.data.maketrans("aeiouyAEIOUYcdenrstuzCDENRSTUZ", 30 * "~"))))
@@ -139,43 +143,34 @@ def predictions(model,data):
     # np.where(indices == 48)[0] = kolke pismeno je diakritizovatelne pismeno v texte na indexe 48
     
 
-    predictions = ""
-    
-    #new_targets_index = 0
-    
-    i = 0
+    predictions = ""    
+    index_pismenka_v_texte = 0
     for line in data.data.split("\n"):
         for word in line.split(" "): 
             predicted_word = ""
             if word in dictionary.variants:
                 best_variant_score = 0
                 for variant in dictionary.variants[word]:
-                    variant_score=0
-                    index = i
-                    for index_pismenka in range(len(word)):
+                    variant_score = 0
+                    index = index_pismenka_v_texte
+                    for pismenko in variant:
                         
-                        if(variant[index_pismenka].lower() not in data.LETTERS_NODIA):
+                        if(pismenko.lower() not in data.LETTERS_NODIA):
+                            index += 1
                             continue
-
-                        print("pred index neviem : len indices, index : ", len(indices), " ", index)
                         index_v_predictions = np.where(indices == index)[0][0]
-                        print("za index neviem ", index_v_predictions)
-
-                        
-                        mark = letter_to_mark(variant[index_pismenka])
-                        
+                        mark = letter_to_mark(pismenko)                        
                         probab_distribution = new_targets[index_v_predictions]                 
-
-                        variant_score += probab_distribution[mark]
-                        
+                        variant_score += probab_distribution[mark]                        
                         index += 1
                                             
                     if variant_score > best_variant_score:
                         predicted_word= variant
                         best_variant_score = variant_score
-                predictions += predicted_word
+                predictions += predicted_word # TODO predicted word je NIC
+                # napriklad pre prve slovo Mela tam neprida ziadnu variantu
             else:
-                index = i
+                index = index_pismenka_v_texte
                 for pismenko in word:
                     if(pismenko.lower() not in data.LETTERS_NODIA):       
                         predictions += pismenko
@@ -184,7 +179,7 @@ def predictions(model,data):
                     index += 1
 
                 
-            i += len(word) + 1
+            index_pismenka_v_texte += len(word) + 1
             predictions += " "
             
         predictions += "\n"
@@ -193,7 +188,7 @@ def predictions(model,data):
 
 
 def get_model():
-    model =sklearn.linear_model.LogisticRegression(verbose = 10, solver = 'saga', max_iter = 10, tol =0)
+    model =sklearn.linear_model.LogisticRegression(verbose = 100, solver = 'saga', max_iter = 100, tol =0)
     
     #model = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(500), max_iter = 100, tol=0)
 
@@ -204,7 +199,7 @@ def get_model():
     return model
 
 
-def test_model(model, dataset):
+def train_test_model(model, dataset):
     # split the data into train and test
     data, target = dataset.data, dataset.target
 
@@ -218,50 +213,50 @@ def test_model(model, dataset):
     features, targets = dataset.get_features()
     model.fit(features, targets)
     dataset.data, dataset.target = test_data, test_target
+    
+    test_model(model, dataset)    
+    
+    return model
+    
+def test_model(model, dataset):
+    # dataset.targets = dataset.data
     features, targets = dataset.get_features()
     prediction = predictions(model, dataset)
     print("Accuracy: {}".format(np.sum(list(prediction) == list(targets))))
 
-    return model
-    
-
-
 
 def main(args: argparse.Namespace) -> Optional[str]:
+
+    args.predict = True
     if args.predict is None:
         # We are training a model.
         np.random.seed(args.seed)
         train = Dataset()
 
-
-        #print ("halo")
-        
+        # T E S T
         model = get_model()
-        features, targets = train.get_features()
-
         test_model(model, train)
+        
+        # T R A I N
+        # model = get_model()
+        # features, targets = train.get_features()
         # model.fit(features, targets)
-            
-
 
         #Serialize the model.
-        args.model_path = "patino_skuska.model"        
+        args.model_path = "patino_skuska.model"
         with lzma.open(args.model_path, "wb") as model_file:
             pickle.dump(model, model_file)
-
     else:
         # Use the model and return test set predictions.
         
-        test = Dataset(args.predict)
+        # test = Dataset(args.predict)
+        test = Dataset()
 
         with lzma.open(args.model_path, "rb") as model_file:
-            model = pickle.load(model_file)
-        
-        # TODO: Generate `predictions` with the test set predictions. Specifically,
-        # produce a diacritized `str` with exactly the same number of words as `test.data`.
-        
-        predictions = predictions(model, test)
-        
+            model = pickle.load(model_file)                
+                
+        # test_model(model, test)
+        predictions = predictions(model, test)        
         return predictions
 
 if __name__ == "__main__":
