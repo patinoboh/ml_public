@@ -129,7 +129,7 @@ def mark_to_letter(letter, mark):
         return letter
 
 
-def predictions(model,data):
+def predictions(model, data):
     dictionary = Dictionary()
     
     features, _ = data.get_features()    
@@ -144,16 +144,16 @@ def predictions(model,data):
 
     predictions = ""    
     index_pismenka_v_texte = 0
-    for line in data.data.split("\n"):
+    for line in data.data.split("\n"): # TODO si myslim, ze je uplne zbytocne to splitovat na riadkoch naco
         for word in line.split(" "): 
             predicted_word = word # TODO lepsie ako incializovat prazdnym stringom
             if word in dictionary.variants:
-                best_variant_score = 0
+                best_variant_score = -np.inf
                 for variant in dictionary.variants[word]:
                     variant_score = 0
                     index = index_pismenka_v_texte
-                    for pismenko in variant:
-                        
+                    for pismenko in variant:                                                
+
                         if(pismenko.lower() not in data.LETTERS_NODIA):
                             index += 1
                             continue
@@ -164,7 +164,7 @@ def predictions(model,data):
                         index += 1
                                             
                     if variant_score > best_variant_score:
-                        predicted_word= variant
+                        predicted_word = variant
                         best_variant_score = variant_score
                 predictions += predicted_word # TODO predicted word je NIC
                 # napriklad pre prve slovo Mela tam neprida ziadnu variantu
@@ -175,9 +175,9 @@ def predictions(model,data):
                         predictions += pismenko
                         index += 1
                         continue
-                    predictions += mark_to_letter(pismenko, max_labels[index])
+                    index_v_predictions = np.where(indices == index)[0][0] # toto su asi chybalo
+                    predictions += mark_to_letter(pismenko, max_labels[index_v_predictions])
                     index += 1
-
                 
             index_pismenka_v_texte += len(word) + 1
             predictions += " "
@@ -255,8 +255,8 @@ def main(args: argparse.Namespace) -> Optional[str]:
         with lzma.open(args.model_path, "rb") as model_file:
             model = pickle.load(model_file)                
                 
-        # test_model(model, test)
-        predictions = predictions(model, test)        
+        test_model(model, test)
+        # predictions = predictions(model, test)        
         return predictions
 
 if __name__ == "__main__":
