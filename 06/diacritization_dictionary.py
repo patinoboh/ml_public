@@ -141,13 +141,12 @@ def predictions(model,data):
     indices = np.where(characterizable_points)[0] # array indexov diakritizovatelnych pismen
     # indices[2] = index tretieho diakritizovatelneho pismena v texte
     # np.where(indices == 48)[0] = kolke pismeno je diakritizovatelne pismeno v texte na indexe 48
-    
 
     predictions = ""    
     index_pismenka_v_texte = 0
     for line in data.data.split("\n"):
         for word in line.split(" "): 
-            predicted_word = ""
+            predicted_word = word # TODO lepsie ako incializovat prazdnym stringom
             if word in dictionary.variants:
                 best_variant_score = 0
                 for variant in dictionary.variants[word]:
@@ -174,6 +173,7 @@ def predictions(model,data):
                 for pismenko in word:
                     if(pismenko.lower() not in data.LETTERS_NODIA):       
                         predictions += pismenko
+                        index += 1
                         continue
                     predictions += mark_to_letter(pismenko, max_labels[index])
                     index += 1
