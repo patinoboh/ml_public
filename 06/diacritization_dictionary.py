@@ -133,7 +133,9 @@ def predictions(model, data):
     dictionary = Dictionary()
     
     features, _ = data.get_features()    
-    new_targets = model.predict_log_proba(features) # TODO takto vyzeraju tieto data : new_targets[0] = [-0.025, -3.67, -10.28]
+    new_targets = model.predict_log_proba(features) # todo takto vyzeraju tieto data : new_targets[0] = [-0.025, -3.67, -10.28]
+                                                    #tak to zjavne ma byt
+                                                    #cize ziadne todo
     max_labels = model.predict(features) # toto je dobre proste tak ako doteraz max_labels[:3] = [1, 0, 2]
 
 
@@ -145,8 +147,10 @@ def predictions(model, data):
     predictions = ""    
     index_pismenka_v_texte = 0
     # for line in data.data.split("\n"): # TODO si myslim, ze je uplne zbytocne to splitovat na riadkoch naco
+                                        #co na tom ma byt todo?
     for word in data.data.split(" "): 
-        predicted_word = word # TODO lepsie ako incializovat prazdnym stringom
+        predicted_word = word # TODO lepsie ako inicializovat prazdnym stringom
+                                #aj toto...
         if word in dictionary.variants:
             best_variant_score = -np.inf
             for variant in dictionary.variants[word]:
@@ -167,7 +171,9 @@ def predictions(model, data):
                     predicted_word = variant
                     best_variant_score = variant_score
             predictions += predicted_word # TODO predicted word je NIC
+                                            #jako?? mne vypisalo Měla
             # napriklad pre prve slovo Mela tam neprida ziadnu variantu
+            #jako?? mne vypisalo Měla
         else:
             index = index_pismenka_v_texte
             for pismenko in word:
@@ -220,7 +226,17 @@ def test_model(model, dataset):
     # dataset.targets = dataset.data
     features, targets = dataset.get_features()
     prediction = predictions(model, dataset)
-    print("Accuracy: {}".format(np.sum(list(prediction) == list(targets))))
+    #print("Accuracy: {}".format(np.sum(list(prediction) == list(targets))))
+    #print("Accuracy: {}".format(np.sum(list(prediction) == list(dataset.target))))
+    
+    x= np.sum([p.strip() == t.strip() for p, t in zip(prediction, dataset.target)])
+    print("Accuracy: {}".format(x))
+    
+    print(x,"/",len(prediction))
+    print(x/len(prediction))
+
+    
+
 
 
 def main(args: argparse.Namespace) -> Optional[str]:
@@ -232,7 +248,7 @@ def main(args: argparse.Namespace) -> Optional[str]:
         # T E S T
         # model = get_model()
         # test_model(model, train)
-        
+
         # T R A I N
         model = get_model()
         features, targets = train.get_features()
@@ -241,6 +257,16 @@ def main(args: argparse.Namespace) -> Optional[str]:
         #Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
             pickle.dump(model, model_file)
+            
+            
+            
+        ### testujem blbosti
+        #with lzma.open(args.model_path, "rb") as model_file:
+         #   model = pickle.load(model_file) 
+            
+        #test = train
+        #train_test_model(model, test)
+        
     else:
         # Use the model and return test set predictions.
         
@@ -250,9 +276,9 @@ def main(args: argparse.Namespace) -> Optional[str]:
             model = pickle.load(model_file)                
                 
         # test_model(model, test)
-        predictions = predictions(model, test)
+        preds = predictions(model, test)
 
-        return predictions
+        return preds
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
