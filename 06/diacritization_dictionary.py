@@ -151,13 +151,15 @@ def get_predictions(model, data):
         predicted_word = word # TODO lepsie ako inicializovat prazdnym stringom
                                 #aj toto...
         if word in dictionary.variants:
+            if word == "ruce" :
+                 print("jakooooo")
             best_variant_score = -np.inf
             for variant in dictionary.variants[word]:
                 variant_score = 0
                 index = index_pismenka_v_texte
                 for pismenko in variant:                                                
 
-                    if(pismenko.lower() not in data.LETTERS_NODIA):
+                    if(pismenko.lower() not in data.LETTERS_NODIA and pismenko.lower() not in data.LETTERS_DIA):
                         index += 1
                         continue
                     index_v_predictions = np.where(indices == index)[0][0]
@@ -181,6 +183,8 @@ def get_predictions(model, data):
                     index += 1
                     continue
                 index_v_predictions = np.where(indices == index)[0][0] # toto su asi chybalo
+                
+                ## Preco tu je mark_to_letter??
                 predictions += mark_to_letter(pismenko, max_labels[index_v_predictions])
                 index += 1
             
@@ -201,6 +205,8 @@ def get_model():
     return model
 
 def train_test_model(model, dataset):
+    print(dataset.target[:20])
+    
     # split the data into train and test
     data, target = dataset.data, dataset.target
 
@@ -221,10 +227,25 @@ def train_test_model(model, dataset):
     
 def test_model(model, dataset):
     # dataset.targets = dataset.data
-    features, targets = dataset.get_features()
+    #features, targets = dataset.get_features()
     prediction = predictions(model, dataset)
+<<<<<<< HEAD
     print("Accuracy: {}".format(np.sum(list(prediction) == list(targets))))
 
+=======
+    #print("Accuracy: {}".format(np.sum(list(prediction) == list(targets))))
+    #print("Accuracy: {}".format(np.sum(list(prediction) == list(dataset.target))))
+    
+    x= np.sum([p.strip() == t.strip() for p, t in zip(prediction, dataset.target)])
+    print("Accuracy: {}".format(x))
+    
+    print(x,"/",len(prediction))
+    print(x/len(prediction))
+    
+    print(dataset.target[:20])
+    print(prediction[:20])
+    #print(dataset.target[:20])
+>>>>>>> bc46aef9191950968ffe6f98e53bf769c97c0f3b
 
 def main(args: argparse.Namespace) -> Optional[str]:
     if args.predict is None:
@@ -252,7 +273,7 @@ def main(args: argparse.Namespace) -> Optional[str]:
          #   model = pickle.load(model_file) 
             
         #test = train
-        #train_test_model(model, test)
+        #test_model(model, test)
         
     else:
         # Use the model and return test set predictions.
