@@ -61,7 +61,7 @@ def main(args: argparse.Namespace) -> float:
     test_terms = [list(re.findall(r'\w+', text)) for text in test_data]
 
     terms = collections.Counter(term for doc in train_terms for term in doc)
-    terms = dict((term, i) for i, term in enumerate(term for term, count in terms.items() if count >= 2))
+    terms = dict((term, i) for i, term in enumerate(term for term, count in terms.items() if count >= 2))    
     print("Number of unique terms with at least two occurrences: {}".format(len(terms)))
 
     # TODO: For each document, compute its features as
