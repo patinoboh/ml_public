@@ -42,6 +42,12 @@ class NewsGroups:
         self.target = dataset.target[:data_size]
         self.target_names = dataset.target_names
 
+# def tf(t, d, binary = False):    
+    # if binary:
+    # else:
+
+
+
 
 def main(args: argparse.Namespace) -> float:
     # Load the 20newsgroups data.
@@ -57,17 +63,26 @@ def main(args: argparse.Namespace) -> float:
     train_terms = [list(re.findall(r'\w+', text)) for text in train_data]
     test_terms = [list(re.findall(r'\w+', text)) for text in test_data]
     
+    flat_terms = [term for doc in train_terms for term in doc]
+    term_counts = {term: flat_terms.count(term) for term in flat_terms}
+    terms = []
+    for key, value in term_counts.items():
+        if(value >= 2):
+            terms.append(key)
+
     # TODO: For each document, compute its features as
     # - term frequency (TF), if `args.tf` is set (term frequency is
     #   proportional to counts but normalized to sum to 1);
     # - otherwise, use binary indicators (1 if a given term is present, else 0)
-    tfs = []
-    for doc in train_terms:
-        tf = {}
-        for term in np.unique(doc):
-            if(doc.count(term) >= 2):
-                tf[term] = doc.count(term) / len(doc) if args.tf else 1 if term in doc else 0
-        tfs.append(tf)
+    tfs = np.zeros((len(train_data),len(terms)))
+    for i, doc in enumerate(train_terms):
+        for j, term in enumerate(doc):
+            if term in terms:
+                tfs[i,j] = tfs[i,j] + 1 if args.tf else 1
+        if(args.tf):
+            tfs[i,] /= np.sum(tfs[i,])
+
+    tfs = np.zeros((len(train_data),len(terms)))
     
 
 
