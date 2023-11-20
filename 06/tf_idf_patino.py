@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--idf", default=False, action="store_true", help="Use IDF weights")
 parser.add_argument("--recodex", default=False, action="store_true", help="Running in ReCodEx")
 parser.add_argument("--seed", default=45, type=int, help="Random seed")
-parser.add_argument("--tf", default=False, action="store_true", help="Use TF weights")
+parser.add_argument("--tf", default=True, action="store_true", help="Use TF weights")
 parser.add_argument("--test_size", default=500, type=int, help="Test set size")
 parser.add_argument("--train_size", default=1000, type=int, help="Train set size")
 # For these and any other arguments you add, ReCodEx will keep your default value.
@@ -53,13 +53,26 @@ def main(args: argparse.Namespace) -> float:
 
     # TODO: Create a feature for every term that is present at least twice
     # in the training data. A term is every maximal sequence of at least 1 word character,
-    # where a word character corresponds to a regular expression `\w`.
+    # where a word character corresponds to a regular expression `\w`.    
     train_terms = [list(re.findall(r'\w+', text)) for text in train_data]
+    test_terms = [list(re.findall(r'\w+', text)) for text in test_data]
+    
     # TODO: For each document, compute its features as
     # - term frequency (TF), if `args.tf` is set (term frequency is
     #   proportional to counts but normalized to sum to 1);
     # - otherwise, use binary indicators (1 if a given term is present, else 0)
-    #
+    tfs = []
+    for doc in train_terms:
+        tf = {}
+        for term in np.unique(doc):
+            if(doc.count(term) >= 2):
+                tf[term] = doc.count(term) / len(doc) if args.tf else 1 if term in doc else 0
+        tfs.append(tf)
+    
+
+
+
+
     # Then, if `args.idf` is set, multiply the document features by the
     # inverse document frequencies (IDF), where
     # - use the variant which contains `+1` in the denominator;
@@ -68,9 +81,13 @@ def main(args: argparse.Namespace) -> float:
 
     # TODO: Train a `sklearn.linear_model.LogisticRegression(solver="liblinear", C=10_000)`
     # model on the train set, and classify the test set.
+    
+    model = sklearn.linear_model.LogisticRegression(solver="liblinear", C=10_000)
+    # model.fit()
+    # model.predict()        
 
     # TODO: Evaluate the test set performance using a macro-averaged F1 score.
-    f1_score = ...
+    f1_score = 10
 
     return 100 * f1_score
 
