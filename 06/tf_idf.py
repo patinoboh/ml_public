@@ -86,7 +86,8 @@ def main(args: argparse.Namespace) -> float:
             if term in terms:
                 j = terms[term]
                 train_features[i,j] = train_features[i,j] + 1 if args.tf else 1
-        train_features[i,:] /= np.sum(train_features[i,:])
+        if args.tf:
+            train_features[i,:] /= np.sum(train_features[i,:])
 
     test_features = np.zeros((len(test_terms),len(terms)))
     for i, doc in enumerate(test_terms):
@@ -111,6 +112,11 @@ def main(args: argparse.Namespace) -> float:
             idfs[i] = np.log(len(train_data)/denominator)
         train_features = train_features * idfs
         test_features = test_features * idfs
+
+    # for dato in train_features:
+    #     dato /= np.sum(dato)
+    # for dato in test_features:
+    #     dato /= np.sum(dato)
 
     # TODO: Train a `sklearn.linear_model.LogisticRegression(solver="liblinear", C=10_000)`
     # model on the train set, and classify the test set.    
