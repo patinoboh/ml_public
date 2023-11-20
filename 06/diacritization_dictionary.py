@@ -128,8 +128,7 @@ def mark_to_letter(letter, mark):
     else:
         return letter
 
-
-def predictions(model, data):
+def get_predictions(model, data):
     dictionary = Dictionary()
     
     features, _ = data.get_features()    
@@ -184,7 +183,6 @@ def predictions(model, data):
     
     return predictions[:-1] # lebo na koniec pridava este medzeru, ktora tam nema byt
 
-
 def get_model():
     model =sklearn.linear_model.LogisticRegression(verbose = 100, solver = 'saga', max_iter = 100, tol =0)
     
@@ -195,7 +193,6 @@ def get_model():
             ("algo", model),
         ]) 
     return model
-
 
 def train_test_model(model, dataset):
     # split the data into train and test
@@ -219,7 +216,7 @@ def train_test_model(model, dataset):
 def test_model(model, dataset):
     # dataset.targets = dataset.data
     features, targets = dataset.get_features()
-    prediction = predictions(model, dataset)
+    prediction = get_predictions(model, dataset)
     print("Accuracy: {}".format(np.sum(list(prediction) == list(targets))))
 
 
@@ -250,7 +247,7 @@ def main(args: argparse.Namespace) -> Optional[str]:
             model = pickle.load(model_file)                
                 
         # test_model(model, test)
-        predictions = predictions(model, test)
+        predictions = get_predictions(model, test)
 
         return predictions
 
