@@ -52,7 +52,7 @@ def main(args: argparse.Namespace) -> float:
     train_data, test_data, train_target, test_target = sklearn.model_selection.train_test_split(
         mnist.data, mnist.target, test_size=args.test_size, random_state=args.seed)
 
-    # TODO: Generate `test_predictions` with classes predicted for `test_data`.
+# TODO: Generate `test_predictions` with classes predicted for `test_data`.
     #
     # Find the `args.k` nearest neighbors, and use their most frequent target class
     # (optionally weighted by a given scheme described below) as prediction,
@@ -69,29 +69,27 @@ def main(args: argparse.Namespace) -> float:
     def l_p_norm(x, y, p):
         return np.sum(np.abs(x - y) ** p) ** (1 / p)
 
-    def uniform(x):
-        return x
-
     def inverse(x):
-        return 1 / np.array(x)
-    
+        return 1 / x
+        
     def softmax(x):
-        x = np.array(x)
-        return np.exp(-x) / np.sum(np.exp(-x))
+        return np.exp(-x)
+
+    # Precompute distances between test and train data
+    distances = sklearn.metrics.pairwise_distances(test_data, train_data, metric='minkowski', p=args.p)
 
     test_predictions = []
 
-    for test_dato in test_data:
-        distances = np.array([l_p_norm(test_dato, train_dato, args.p) for train_dato in train_data])
-        k_neighbors = np.argsort(distances)[:args.k]
+    for i in range(len(test_data)):
+        k_neighbors = np.argsort(distances[i])[:args.k]
         k_neighbors_labels = train_target[k_neighbors]
 
         if args.weights == "uniform":
-            neighbor_weights = uniform(distances[k_neighbors])
+            neighbor_weights = None
         elif args.weights == "inverse":
-            neighbor_weights = inverse(distances[k_neighbors])
+            neighbor_weights = inverse(distances[i][k_neighbors])
         elif args.weights == "softmax":
-            neighbor_weights = softmax(distances[k_neighbors])
+            neighbor_weights = softmax(distances[i][k_neighbors])
     
         most_common_label = np.argmax(np.bincount(k_neighbors_labels, weights=neighbor_weights))
 
@@ -99,8 +97,6 @@ def main(args: argparse.Namespace) -> float:
 
     accuracy = sklearn.metrics.accuracy_score(test_target, test_predictions)
 
-    # If you want to plot misclassified examples, you also need to fill `test_neighbors`
-    # with indices of nearest neighbors; but it is not needed for passing in ReCodEx.
     if args.plot:
         import matplotlib.pyplot as plt
         examples = [[] for _ in range(10)]
@@ -122,8 +118,6 @@ if __name__ == "__main__":
     accuracy = main(args)
     print("K-nn accuracy for {} nearest neighbors, L_{} metric, {} weights: {:.2f}%".format(
         args.k, args.p, args.weights, accuracy))
-
-#Rasto Nowak
 
 #6a81285c-247a-11ec-986f-f39926f24a9c
 
