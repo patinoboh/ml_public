@@ -18,7 +18,11 @@ parser.add_argument("--test_size", default=0.5, type=lambda x: int(x) if x.isdig
 # If you add more arguments, ReCodEx will keep them with your default values.
 
 
+<<<<<<< HEAD
 def main(args: argparse.Namespace) -> tuple[float, float]:
+=======
+def main(args: argparse.Namespace) -> float:
+>>>>>>> b420eace5781af8b9f2e4a4c3f10622cc90f53da
     # Load the digits dataset.
     data, target = sklearn.datasets.load_digits(n_class=args.classes, return_X_y=True)
 
@@ -47,6 +51,7 @@ def main(args: argparse.Namespace) -> tuple[float, float]:
     #
     # In all cases, the class prior is the distribution of the train data classes.
 
+<<<<<<< HEAD
     prior = np.bincount(train_target) / len(train_target)
     log_prob = np.zeros((len(test_data), args.classes)) + np.log(prior)
 
@@ -85,12 +90,18 @@ def main(args: argparse.Namespace) -> tuple[float, float]:
         test_data = test_data >= 8
         log_prob += np.matmul((test_data != 0), np.log(param["p"])) + np.matmul((test_data == 0), np.log(1 - param["p"]))    
 
+=======
+>>>>>>> b420eace5781af8b9f2e4a4c3f10622cc90f53da
     # TODO: Predict the test data classes, and compute
     # - the test set accuracy, and
     # - the joint log-probability of the test set, i.e.,
     #     \sum_{(x_i, t_i) \in test set} \log P(x_i, t_i).
+<<<<<<< HEAD
     test_accuracy = sklearn.metrics.accuracy_score(test_target, np.argmax(log_prob, axis=1))
     test_log_probability = np.sum(log_prob[np.arange(len(test_target)), test_target])
+=======
+    test_accuracy, test_log_probability = ...
+>>>>>>> b420eace5781af8b9f2e4a4c3f10622cc90f53da
 
     return 100 * test_accuracy, test_log_probability
 
@@ -100,6 +111,7 @@ if __name__ == "__main__":
     test_accuracy, test_log_probability = main(args)
 
     print("Test accuracy {:.2f}%, log probability {:.2f}".format(test_accuracy, test_log_probability))
+<<<<<<< HEAD
 
 #Rasto Nowak
 
@@ -112,3 +124,5 @@ if __name__ == "__main__":
 #Martin Oravec
 
 #1056cfa0-24fb-11ec-986f-f39926f24a9c
+=======
+>>>>>>> b420eace5781af8b9f2e4a4c3f10622cc90f53da
