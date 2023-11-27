@@ -49,27 +49,25 @@ class Dataset:
 
 def get_model():
     #este alpha 
-    naive_bayes = sklearn.naive_bayes.MultinomialNB(alpha = 0.05)
-    tfidf = sklearn.feature_extraction.text.TfidfVectorizer(analyzer = "char", lowercase = True, ngram_range = (1,6))
+    naive_bayes = sklearn.naive_bayes.MultinomialNB()
+    tfidf = sklearn.feature_extraction.text.TfidfVectorizer(analyzer = "char", lowercase = False, ngram_range = (1,4))
     
     model = sklearn.pipeline.Pipeline([
         ("Features", tfidf),
         ("MultinomialNB", naive_bayes),])
     
     # create gridsearchcv
-    # grid = {"MultinomialNB__alpha": np.linspace(0.001, 0.5, 20), "Features__ngram_range": [(1,4), (1,5), (1,6)], 
-    #         "Features__analyzer": ["char", "char_wb"], "Features__lowercase": [True, False]}
-    # model = sklearn.model_selection.GridSearchCV(estimator=model, 
-    #                                              cv = sklearn.model_selection.StratifiedKFold(5), 
-    #                                              param_grid=grid, 
-    #                                              n_jobs=2, 
-    #                                              refit=True)
-    # B E S T  _ P A R A M S
-    # {'Features__analyzer': 'char', 'Features__lowercase': True, 'Features__ngram_range': (1, 5), 'MultinomialNB__alpha': 0.1175}
-    # {'Features__analyzer': 'char', 'Features__lowercase': True, 'Features__ngram_range': (1, 6), 'MultinomialNB__alpha': 0.05357894736842105}
-    # {'Features__analyzer': 'char', 'Features__lowercase': True, 'Features__ngram_range': (1, 6), 'MultinomialNB__alpha': 0.053526315789473686}
-
-    # model.verbose = 10
+    grid = {"MultinomialNB__alpha": np.linspace(0.001, 0.7, 7), "Features__ngram_range": [(1,4), (1,5)], 
+            "Features__analyzer": ["char", "word", "char_wb"], "Features__lowercase": [True, False]}
+    
+    model = sklearn.model_selection.GridSearchCV(estimator=model, 
+                                                 cv = sklearn.model_selection.StratifiedKFold(5), 
+                                                 param_grid=grid, 
+                                                 n_jobs=2, 
+                                                 refit=True)
+    
+    # where to put max verbose while training model?
+    model.verbose = 10
     return model
 
 def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
@@ -82,7 +80,7 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         model = get_model()
         
         model.fit(train.data, train.target)
-        # print(model.best_params_)
+        print(model.best_params_)
 
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
