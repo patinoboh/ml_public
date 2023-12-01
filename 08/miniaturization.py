@@ -10,6 +10,9 @@ import urllib.request
 import numpy as np
 import numpy.typing as npt
 import sklearn.neural_network
+import sklearn.metrics
+import sklearn.pipeline
+import sklearn.ensemble
 
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
@@ -76,14 +79,41 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         train = Dataset()
 
         # TODO: Train a model on the given dataset and store it in `model`.
-        model = ...
+        
+        #MLPFullDistributionClassifier
+        
+        #TODO DATA AUGMENT
+        
+        model = sklearn.pipeline.Pipeline([
+            ("scaler", sklearn.preprocessing.MinMaxScaler()),
+            ('algos', sklearn.ensemble.VotingClassifier([
+                    ("{}".format(i), sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(650), max_iter = 100,  alpha = 0, tol =0))
+                    for i in range(10)
+            ], voting="soft")),
+        ])
+        
+        #model = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(650), max_iter = 100,  alpha = 0, tol =0)
+        """model = sklearn.pipeline.Pipeline([
+            ("scaler", sklearn.preprocessing.MinMaxScaler()),
+            ("algo", model),
+        ])"""
+        
+        model.fit(train.data, train.target)
+        
+        train_predictions = model.predict(train.data)
+        train_accuracy = sklearn.metrics.accuracy_score(train.target, train_predictions)
+        print(f"Accuracy on the training set: {train_accuracy:.2%}")
 
         # If you trained one or more MLPs, you can use the following code
         # to compress it significantly (approximately 12 times). The snippet
         # assumes the trained MLP is in the `mlp` variable.
-        #   mlp._optimizer = None
-        #   for i in range(len(mlp.coefs_)): mlp.coefs_[i] = mlp.coefs_[i].astype(np.float16)
-        #   for i in range(len(mlp.intercepts_)): mlp.intercepts_[i] = mlp.intercepts_[i].astype(np.float16)
+        
+        #model = model.named_steps["algo"]
+        for model in model['algos'].estimators_:
+            model._optimizer = None
+            for i in range(len(model.coefs_)): model.coefs_[i] = model.coefs_[i].astype(np.float16)
+            for i in range(len(model.intercepts_)): model.intercepts_[i] = model.intercepts_[i].astype(np.float16)
+
 
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
@@ -97,7 +127,7 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
             model = pickle.load(model_file)
 
         # TODO: Generate `predictions` with the test set predictions.
-        predictions = ...
+        predictions = model.predict(test.data)
 
         return predictions
 
@@ -105,3 +135,16 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
     main(args)
+
+
+# Rasto Nowak
+
+# 6a81285c-247a-11ec-986f-f39926f24a9c
+
+# Patrik Brocek
+
+# 5ccdc432-238f-11ec-986f-f39926f24a9c
+
+# Martin Oravec
+
+# 1056cfa0-24fb-11ec-986f-f39926f24a9c
