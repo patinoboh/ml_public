@@ -46,6 +46,15 @@ class Dataset:
             setattr(self, key, value[:data_size])
         self.data = self.data.reshape([-1, 28*28]).astype(float)
 
+def augment(x):
+    x = x.reshape(28, 28)
+    x = scipy.ndimage.zoom(x.reshape(28, 28), (np.random.uniform(0.86, 1.2), np.random.uniform(0.86, 1.2)))
+    x = np.pad(x, [(2, 2), (2, 2)])
+    os = [np.random.randint(size - 28 + 1) for size in x.shape]
+    x = x[os[0]:os[0] + 28, os[1]:os[1] + 28]
+    x = scipy.ndimage.rotate(x, np.random.uniform(-15, 15), reshape=False)
+    x = np.clip(x, 0, 1)
+    return x.reshape(-1)
 
 # The following class modifies `MLPClassifier` to support full categorical distributions
 # on input, i.e., each label should be a distribution over the predicted classes.
@@ -72,25 +81,18 @@ class MLPFullDistributionClassifier(sklearn.neural_network.MLPClassifier):
             self._label_binarizer = self.FullDistributionLabels()
             self.classes_ = y.shape[1]
         return X, y
-    
-    
-def scale(image, scale1, scale2):
-    image = scipy.ndimage.zoom(image.reshape(28,28), (np.random.uniform(scale1,scale2), np.random.uniform(scale1,scale2)))
-    return image
 
-def add_padding(image, pad_size):
-    image = np.pad(image, [(pad_size, pad_size), (pad_size, pad_size)])
-    return image
+def get_teacher():
+    mlp_full_dist_classifier = MLPFullDistributionClassifier(hidden_layer_sizes=(680), max_iter=200, alpha = 0,tol=0,verbose =100)
+    #model = sklearn.pipeline.Pipeline([
+     #       ("scaler", sklearn.preprocessing.MinMaxScaler()),
+      #      ("algo", mlp_full_dist_classifier),])
+    model = mlp_full_dist_classifier
+    return model
 
-def crop(image, crop_size):
-    x = [np.random.randint(size - crop_size + 1) for size in image.shape]
-    image = image[x[0]:x[0] + crop_size, x[1]:x[1] + crop_size]
-    return image
-
-def rotate(image, rotate1, rotate2):
-    image = scipy.ndimage.rotate(image, np.random.uniform(rotate2, rotate2), reshape=False)
-    return image
-
+def get_model():
+    mlp_full_dist_classifier = MLPFullDistributionClassifier(hidden_layer_sizes=(680), max_iter=200, alpha = 0,tol=0,verbose =100)
+    return mlp_full_dist_classifier
     
 def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
     if args.predict is None:
@@ -99,37 +101,8 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         train = Dataset()
 
         # TODO: Train a model on the given dataset and store it in `model`.
-        
-        
-        
-        #TODO teacher and student
-        
-        #TODO DATA AUGMENT
-        augmented_data = []
-        for image in train.data:
-            image.reshape(28, 28)
-            scaled_img = scale(image, 0.9,1.1)
-            padded_img = add_padding(scaled_img, 2)
-            cropped_img = crop(padded_img, 28)
-            rotated_img = rotate(cropped_img, -15, 15)
-            rotated_img= np.clip(rotated_img, 0, 1)
-            rotated_img= rotated_img.reshape(-1)
-            augmented_data.append(rotated_img)
-
-        combined_data = np.vstack([train.data, augmented_data])
-        #combined_data = np.append(train.data, np.array(augmented_data), axis=0)
-        combined_targets = np.concatenate([train.target, train.target])
-        
-        model = sklearn.pipeline.Pipeline([
-            ("scaler", sklearn.preprocessing.MinMaxScaler()),
-            ('algos', sklearn.ensemble.VotingClassifier([
-                    ("{}".format(i), sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(650), max_iter = 1,  alpha = 0, tol =0))
-                    for i in range(2)
-            ], voting="soft")),
-        ])
-        
-        #model.fit(train.data, train.target)
-        model.fit(combined_data, combined_targets) 
+        teacher = get_teacher()        
+        print(teacher.FullDistributionLabels.fit(train.data,train.target)[0])
         
         train_predictions = model.predict(train.data)
         train_accuracy = sklearn.metrics.accuracy_score(train.target, train_predictions)
@@ -139,11 +112,12 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         # to compress it significantly (approximately 12 times). The snippet
         # assumes the trained MLP is in the `mlp` variable.
         
+        # TODO compress
         #model = model.named_steps["algo"]
-        for model in model['algos'].estimators_:
-            model._optimizer = None
-            for i in range(len(model.coefs_)): model.coefs_[i] = model.coefs_[i].astype(np.float16)
-            for i in range(len(model.intercepts_)): model.intercepts_[i] = model.intercepts_[i].astype(np.float16)
+        #for model in model['algos'].estimators_:
+        model._optimizer = None
+        for i in range(len(model.coefs_)): model.coefs_[i] = model.coefs_[i].astype(np.float16)
+        for i in range(len(model.intercepts_)): model.intercepts_[i] = model.intercepts_[i].astype(np.float16)
 
 
         # Serialize the model.
