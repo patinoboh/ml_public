@@ -15,6 +15,7 @@ import sklearn.pipeline
 import sklearn.ensemble
 import scipy
 import multiprocessing
+import sklearn.tree
 
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
@@ -23,7 +24,7 @@ parser.add_argument("--recodex", default=False, action="store_true", help="Runni
 parser.add_argument("--seed", default=42, type=int, help="Random seed")
 # For these and any other arguments you add, ReCodEx will keep your default value.
 parser.add_argument("--model_path", default="miniaturization.model", type=str, help="Model path")
-parser.add_argument("--stary_model", default="STARY_MNIST_MODEL/mnist_competition.model", type=str, help="Model path")
+parser.add_argument("--stary_model", default="MNIST/mnist_competition.model", type=str, help="Model path")
 
 class Dataset:
     """MNIST Dataset.
@@ -91,32 +92,48 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         with lzma.open(args.stary_model, "rb") as model_file:
             model = pickle.load(model_file)
         
-        train.target = model.predict_proba(train.data)
+        targets = model.predict_proba(train.data)
         
-        algo = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(680), max_iter = 100,  alpha = 0, tol =0)
+        #algo = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(682), max_iter = 100,  alpha = 0, tol =0)
+        #algo = sklearn.tree.DecisionTreeClassifier(max_depth=10)
+        #model = sklearn.pipeline.Pipeline([
+         #   ("scaler", sklearn.preprocessing.MinMaxScaler()),
+          #  ("algo", algo),
+        #])
+        
         model = sklearn.pipeline.Pipeline([
             ("scaler", sklearn.preprocessing.MinMaxScaler()),
-            ('algos', algo),
+            ('algos', sklearn.ensemble.VotingClassifier([
+                    ("{}".format(i), sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(650), max_iter = 100,  alpha = 0, tol =0))
+                    for i in range(5)
+            ], voting="soft")),
         ])
         
-        model.fit(train.data, train.target)
+        data_augment = np.array(list(map(augment, train_data)))
+
+        train_data = np.concatenate((train_data, data_augment))
+        train_target = np.concatenate((train_target, data_augment))
+        
+        model.fit(train.data, targets)
 
         # TODO: Train a model on the given dataset and store it in `model`.
         
         train_predictions = model.predict(train.data)
-        train_accuracy = sklearn.metrics.accuracy_score(train.target, train_predictions)
+        #result_vector = [row.index(1) for row in train_predictions]
+        result_vector = np.argmax(train_predictions, axis=1)
+        train_accuracy = sklearn.metrics.accuracy_score(train.target, result_vector)
         print(f"Accuracy on the training set: {train_accuracy:.2%}")
-
+ 
         # If you trained one or more MLPs, you can use the following code
         # to compress it significantly (approximately 12 times). The snippet
         # assumes the trained MLP is in the `mlp` variable.
         
         # TODO compress
-        #model = model.named_steps["algo"]
-        #for model in model['algos'].estimators_:
-        model._optimizer = None
-        for i in range(len(model.coefs_)): model.coefs_[i] = model.coefs_[i].astype(np.float16)
-        for i in range(len(model.intercepts_)): model.intercepts_[i] = model.intercepts_[i].astype(np.float16)
+        #model = model.named_steps["algos"]
+        for model in model["algos"].estimators_:
+            model._optimizer = None
+            for i in range(len(model.coefs_)): model.coefs_[i] = model.coefs_[i].astype(np.float16)
+            for i in range(len(model.intercepts_)): model.intercepts_[i] = model.intercepts_[i].astype(np.float16)
 
 
         # Serialize the model.
@@ -131,7 +148,8 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
             model = pickle.load(model_file)
 
         # TODO: Generate `predictions` with the test set predictions.
-        predictions = model.predict(test.data)
+        preds = model.predict(test.data)
+        predictions = np.argmax(preds, axis=1)
 
         return predictions
 
