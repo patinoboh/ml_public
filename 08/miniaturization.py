@@ -23,8 +23,7 @@ parser.add_argument("--recodex", default=False, action="store_true", help="Runni
 parser.add_argument("--seed", default=42, type=int, help="Random seed")
 # For these and any other arguments you add, ReCodEx will keep your default value.
 parser.add_argument("--model_path", default="miniaturization.model", type=str, help="Model path")
-parser.add_argument("--stary_model", default="/STARY_MNIST_MODEL/mnist_competition.model", type=str, help="Model path")
-
+parser.add_argument("--stary_model", default="STARY_MNIST_MODEL/mnist_competition.model", type=str, help="Model path")
 
 class Dataset:
     """MNIST Dataset.
@@ -94,7 +93,13 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         
         train.target = model.predict_proba(train.data)
         
+        algo = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(680), max_iter = 100,  alpha = 0, tol =0)
+        model = sklearn.pipeline.Pipeline([
+            ("scaler", sklearn.preprocessing.MinMaxScaler()),
+            ('algos', algo),
+        ])
         
+        model.fit(train.data, train.target)
 
         # TODO: Train a model on the given dataset and store it in `model`.
         
