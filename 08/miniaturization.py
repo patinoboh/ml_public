@@ -23,6 +23,7 @@ parser.add_argument("--recodex", default=False, action="store_true", help="Runni
 parser.add_argument("--seed", default=42, type=int, help="Random seed")
 # For these and any other arguments you add, ReCodEx will keep your default value.
 parser.add_argument("--model_path", default="miniaturization.model", type=str, help="Model path")
+parser.add_argument("--stary_model", default="/STARY_MNIST_MODEL/mnist_competition.model", type=str, help="Model path")
 
 
 class Dataset:
@@ -81,28 +82,21 @@ class MLPFullDistributionClassifier(sklearn.neural_network.MLPClassifier):
             self._label_binarizer = self.FullDistributionLabels()
             self.classes_ = y.shape[1]
         return X, y
-
-def get_teacher():
-    mlp_full_dist_classifier = MLPFullDistributionClassifier(hidden_layer_sizes=(680), max_iter=200, alpha = 0,tol=0,verbose =100)
-    #model = sklearn.pipeline.Pipeline([
-     #       ("scaler", sklearn.preprocessing.MinMaxScaler()),
-      #      ("algo", mlp_full_dist_classifier),])
-    model = mlp_full_dist_classifier
-    return model
-
-def get_model():
-    mlp_full_dist_classifier = MLPFullDistributionClassifier(hidden_layer_sizes=(680), max_iter=200, alpha = 0,tol=0,verbose =100)
-    return mlp_full_dist_classifier
     
 def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
     if args.predict is None:
         # We are training a model.
         np.random.seed(args.seed)
         train = Dataset()
+        
+        with lzma.open(args.stary_model, "rb") as model_file:
+            model = pickle.load(model_file)
+        
+        train.target = model.predict_proba(train.data)
+        
+        
 
         # TODO: Train a model on the given dataset and store it in `model`.
-        teacher = get_teacher()        
-        print(teacher.FullDistributionLabels.fit(train.data,train.target)[0])
         
         train_predictions = model.predict(train.data)
         train_accuracy = sklearn.metrics.accuracy_score(train.target, train_predictions)
