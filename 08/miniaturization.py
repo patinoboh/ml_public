@@ -63,7 +63,7 @@ def augment(x):
 # the `predict_proba` method returns the full distribution.
 # Note that because we overwrite a private method, it is guaranteed to work only with
 # scikit-learn 1.3.0, but it will most likely work with any 1.3.*.
-class MLPFullDistributionClassifier(sklearn.neural_network.MLPClassifier):
+class MLPFullDistributionClassifier(sklearn.neural_network.MLPClassifier ):
     class FullDistributionLabels:
         y_type_ = "multiclass"
 
@@ -82,7 +82,42 @@ class MLPFullDistributionClassifier(sklearn.neural_network.MLPClassifier):
             self._label_binarizer = self.FullDistributionLabels()
             self.classes_ = y.shape[1]
         return X, y
-    
+
+
+# def get_patrikov_model(dataset):
+#     model = []
+#     for _ in range(10):
+#         model.append(
+#             sklearn.neural_network.MLPRegressor(
+#                 hidden_layer_sizes=(100,),
+#                 activation="relu",
+#                 solver="adam",
+#                 alpha=0.0001,
+#                 batch_size="auto",
+#                 learning_rate="constant",
+#                 learning_rate_init=0.001,
+#                 power_t=0.5,
+#                 max_iter=200,
+#                 shuffle=True,
+#                 random_state=None,
+#                 tol=0.0001,
+#                 verbose=False,
+#                 warm_start=False,
+#                 momentum=0.9,
+#                 nesterovs_momentum=True,
+#                 early_stopping=False,
+#                 validation_fraction=0.1,
+#                 beta_1=0.9,
+#                 beta_2=0.999,
+#                 epsilon=1e-08,
+#                 n_iter_no_change=10,
+#                 max_fun=15000,
+#             )
+#         )
+#     for i in range(10):
+#         model[i].fit(dataset.data, dataset.target[:, i])
+
+
 def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
     if args.predict is None:
         # We are training a model.
@@ -94,35 +129,44 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         
         targets = model.predict_proba(train.data)
         
-        #algo = sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(682), max_iter = 100,  alpha = 0, tol =0)
+        #data_augment = np.array(list(map(augment, train.data)))
+
+        #train.data = np.concatenate((train.data, data_augment))
+        #train.target = np.concatenate((train.target, train.target))
+        #targets = np.concatenate((targets, targets))
+
+
+        # scale data in train.data using sklearn min max scaler
+        scaler = sklearn.preprocessing.MinMaxScaler()
+        train.data = scaler.fit_transform(train.data)
+             
+        
+        algo = MLPFullDistributionClassifier(verbose=100,hidden_layer_sizes=(600), max_iter = 150,  alpha = 0, tol =0)
         #algo = sklearn.tree.DecisionTreeClassifier(max_depth=10)
         #model = sklearn.pipeline.Pipeline([
          #   ("scaler", sklearn.preprocessing.MinMaxScaler()),
           #  ("algo", algo),
         #])
         
-        model = sklearn.pipeline.Pipeline([
+
+        algo.fit(train.data,targets)
+
+        """model = sklearn.pipeline.Pipeline([
             ("scaler", sklearn.preprocessing.MinMaxScaler()),
             ('algos', sklearn.ensemble.VotingClassifier([
                     ("{}".format(i), sklearn.neural_network.MLPClassifier(verbose=100,hidden_layer_sizes=(650), max_iter = 100,  alpha = 0, tol =0))
                     for i in range(5)
-            ], voting="soft")),
-        ])
+            ], voting="soft", n_jobs=7)),
+        ])"""
         
-        data_augment = np.array(list(map(augment, train_data)))
-
-        train_data = np.concatenate((train_data, data_augment))
-        train_target = np.concatenate((train_target, data_augment))
-        
-        model.fit(train.data, targets)
 
         # TODO: Train a model on the given dataset and store it in `model`.
         
-        train_predictions = model.predict(train.data)
+        #train_predictions = model.predict_proba(train.data)
         #result_vector = [row.index(1) for row in train_predictions]
-        result_vector = np.argmax(train_predictions, axis=1)
-        train_accuracy = sklearn.metrics.accuracy_score(train.target, result_vector)
-        print(f"Accuracy on the training set: {train_accuracy:.2%}")
+        #result_vector = np.argmax(train_predictions, axis=-1)
+        #print(result_vector[0])
+        #print(train.target[0])
  
         # If you trained one or more MLPs, you can use the following code
         # to compress it significantly (approximately 12 times). The snippet
@@ -130,15 +174,20 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         
         # TODO compress
         #model = model.named_steps["algos"]
-        for model in model["algos"].estimators_:
-            model._optimizer = None
-            for i in range(len(model.coefs_)): model.coefs_[i] = model.coefs_[i].astype(np.float16)
-            for i in range(len(model.intercepts_)): model.intercepts_[i] = model.intercepts_[i].astype(np.float16)
+        #for model in model["algos"].estimators_:
+        model = algo
+        model._optimizer = None
+        for i in range(len(model.coefs_)): model.coefs_[i] = model.coefs_[i].astype(np.float16)
+        for i in range(len(model.intercepts_)): model.intercepts_[i] = model.intercepts_[i].astype(np.float16)
 
 
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
             pickle.dump(model, model_file)
+            
+        train_pred = algo.predict(train.data)        
+        train_accuracy = sklearn.metrics.accuracy_score(targets, train_pred)
+        print(f"Accuracy on the training set: {train_accuracy:.2%}")
 
     else:
         # Use the model and return test set predictions, either as a Python list or a NumPy array.
@@ -147,11 +196,13 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         with lzma.open(args.model_path, "rb") as model_file:
             model = pickle.load(model_file)
 
+        scaler = sklearn.preprocessing.MinMaxScaler()
+        test.data = scaler.fit_transform(test.data)
+        
         # TODO: Generate `predictions` with the test set predictions.
         preds = model.predict(test.data)
-        predictions = np.argmax(preds, axis=1)
-
-        return predictions
+        
+        return preds
 
 
 if __name__ == "__main__":
