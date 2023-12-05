@@ -10,6 +10,9 @@ from typing import Optional
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+import sklearn
+import sklearn.ensemble
+import sklearn.pipeline
 
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
@@ -45,8 +48,32 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         train = Dataset()
 
         # TODO: Train a model on the given dataset and store it in `model`.
-        model = ...
-
+        
+        algo = sklearn.ensemble.HistGradientBoostingClassifier(),
+        model = sklearn.pipeline.Pipeline([
+            ("scaler", sklearn.preprocessing.StandardScaler()),
+            ("algo", algo)])
+        
+        # TODO CV
+        # este iba max_depth :[4,6,8,10]
+        """grid = {"algo__max_iter": [500,600,700], "algo__max_leaf_nodes":[10,20,30,"None"], "algo__early_stopping":[False, True,"auto"] }
+        model = sklearn.model_selection.GridSearchCV(estimator=model,  
+                                                      cv = sklearn.model_selection.StratifiedKFold(5), 
+                                                      param_grid=grid, 
+                                                      n_jobs=1, 
+                                                      refit=True,
+                                                      verbose =100,
+                                                      scoring='accuracy')"""
+        
+        scores = sklearn.model_selection.cross_val_score(model, train.data, train.target, cv=sklearn.model_selection.StratifiedKFold(5), n_jobs=7, scoring = 'accuracy')
+        print(args.cv, 100 * scores.mean(), 100 * scores.std())
+        
+        model.fit(train.data, train.target)
+        
+        
+        
+        #print(model.best_params_)
+        
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
             pickle.dump(model, model_file)
@@ -60,7 +87,7 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
 
         # TODO: Generate `predictions` with the test set predictions, either
         # as a Python list or a NumPy array.
-        predictions = ...
+        predictions = model.predict(test.data)
 
         return predictions
 
