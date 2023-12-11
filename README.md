@@ -2,7 +2,7 @@
 
 Firstly you might need to install [Live Share](https://marketplace.visualstudio.com/items?itemName=MS-vsliveshare.vsliveshare).
 
-Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?AB9478B03135308D579D1ADFE3212104715F) to collaborate real time.
+Then use [this link](https://prod.liveshare.vsengsaas.visualstudio.com/join?E679DFFD612D7344B3C1DF1930E891B75CAA) to collaborate real time.
 
 [Rastov link](https://prod.liveshare.vsengsaas.visualstudio.com/join?034968FF0BDFD80325CF819D9F827B1A7423)
 
