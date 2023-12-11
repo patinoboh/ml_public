@@ -19,6 +19,26 @@ parser.add_argument("--test_size", default=0.25, type=lambda x: int(x) if x.isdi
 # If you add more arguments, ReCodEx will keep them with your default values.
 
 
+class Node:
+    def __init__(self, instances, prediction):
+        self.is_leaf = True
+        self.instances = instances
+        self.prediction = prediction
+
+    def split(self, feature, value, left, right):
+        self.is_leaf = False
+        self.feature = feature
+        self.value = value
+        self.left = left
+        self.right = right
+        self.left = left
+        self.right = right
+    def __init__(self, criterion, max_depth, min_to_split, max_leaves):
+        self._criterion = getattr(self, "_criterion_" + criterion)
+        self._max_depth = max_depth
+        self._min_to_split = min_to_split
+        self._max_leaves = max_leaves
+
 def main(args: argparse.Namespace) -> tuple[float, float]:
     # Use the given dataset.
     data, target = getattr(sklearn.datasets, "load_{}".format(args.dataset))(return_X_y=True)
