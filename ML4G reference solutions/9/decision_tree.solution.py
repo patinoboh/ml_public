@@ -97,6 +97,7 @@ class DecisionTree:
     def _best_split(self, node):
         best_criterion = None
         for feature in range(self._data.shape[1]):
+            
             sorted_indices = node.instances[np.argsort(self._data[node.instances, feature])]
             for i in range(len(sorted_indices) - 1):
                 if self._data[sorted_indices[i], feature] == self._data[sorted_indices[i + 1], feature]:
