@@ -92,6 +92,7 @@ class DecisionTree:
         return sorted_data_indices, borders
     
     def _best_split(self, node):        
+        # best_crierion, features, value, left, right
         best_criterion = None
 
         for feature in range(self._data.shape[1]):

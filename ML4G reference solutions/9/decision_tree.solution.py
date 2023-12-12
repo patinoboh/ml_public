@@ -72,7 +72,9 @@ class DecisionTree:
         self._split_recursively(node.right, depth + 1)
 
     def _split_adaptively(self):
+
         def split_value(node, index, depth):
+
             best_split = self._best_split(node)
             return (best_split[0], index, depth, node, *best_split[1:])
 
@@ -95,6 +97,7 @@ class DecisionTree:
         )
 
     def _best_split(self, node):
+        
         best_criterion = None
         for feature in range(self._data.shape[1]):
             
