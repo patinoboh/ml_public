@@ -7,6 +7,10 @@ from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
+import sklearn
+import sklearn.pipeline
+import sklearn.svm
+import sklearn.feature_extraction
 
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
@@ -43,7 +47,47 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         train = Dataset()
 
         # TODO: Train a model on the given dataset and store it in `model`.
-        model = ...
+        
+        algo = sklearn.svm.LinearSVC()
+        
+        words = sklearn.feature_extraction.text.TfidfVectorizer()
+        chars = sklearn.feature_extraction.text.TfidfVectorizer()
+        
+        #model = sklearn.pipeline.Pipeline([
+         #   ("features_words", words),
+          #  ("features_chars", chars),
+           # ("algo", algo)])
+           
+        model = sklearn.pipeline.Pipeline([
+            ("features", sklearn.pipeline.FeatureUnion(
+                ([("words", sklearn.feature_extraction.text.TfidfVectorizer())]) + 
+                ([("chars", sklearn.feature_extraction.text.TfidfVectorizer())]))),
+            ("algo", algo)])
+        
+        # TODO CV
+        
+        # , "features__words__stop_words" : [None], "features__chars__stop_words" : [None]
+        grid = {"features__words__sublinear_tf" : [True], "features__chars__sublinear_tf" : [False],"features__words__lowercase" : [True],
+                "features__chars__lowercase" : [False], "features__words__analyzer" : ["word"], "features__chars__analyzer" : ["char_wb"],
+                #"features__words__ngram_range" : [(1, 2), (1, 3), (1, 4)], "features__chars__ngram_range" : [(1, 2), (1, 3), (1, 4)],
+                # toto bolo 0.819
+                "features__words__ngram_range" : [(1, 2)], "features__chars__ngram_range" : [ (1, 3), (1, 4), (1,5), (1,6)],
+                # toto bolo TODO
+                "features__words__binary" : [False], "features__chars__binary" : [True]
+                }
+        model = sklearn.model_selection.GridSearchCV(estimator=model,  
+                                                      cv = sklearn.model_selection.StratifiedKFold(5), 
+                                                      param_grid=grid, 
+                                                      n_jobs=7, 
+                                                      refit=True,
+                                                      verbose =100)
+        
+
+        
+        model.fit(train.data, train.target)
+        
+        print("Best parameters",model.best_params_)
+        print("Best Score:", model.best_score_)
 
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
@@ -58,7 +102,7 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
 
         # TODO: Generate `predictions` with the test set predictions, either
         # as a Python list or a NumPy array.
-        predictions = ...
+        predictions = model.predict(test.data)
 
         return predictions
 
