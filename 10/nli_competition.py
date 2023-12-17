@@ -7,10 +7,14 @@ from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
-import sklearn
-import sklearn.pipeline
-import sklearn.svm
-import sklearn.feature_extraction
+
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from scipy.sparse import hstack
+
+from sklearn.svm import LinearSVC
 
 parser = argparse.ArgumentParser()
 # These arguments will be set appropriately by ReCodEx, even if you change them.
@@ -46,63 +50,38 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
         np.random.seed(args.seed)
         train = Dataset()
 
+        char_vectorizer = TfidfVectorizer(sublinear_tf=False, max_df=.3, min_df=5, lowercase=False, analyzer='char', ngram_range=(1,6), binary=True, max_features=100000, decode_error='ignore')
+        word_vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=.3, min_df=5, lowercase=True, analyzer='word', ngram_range=(1,2), decode_error='ignore')
+        
+        X_train, X_test, y_train, y_test = train_test_split(train.data, train.target, test_size=0.1, random_state=42)
+
+        char_features = char_vectorizer.fit_transform(X_train)
+        word_features = word_vectorizer.fit_transform(X_train)
+        train_targets = y_train
+        
+        train_features = hstack([char_features, word_features])
+
         # TODO: Train a model on the given dataset and store it in `model`.
-        
-        algo = sklearn.svm.LinearSVC()
-        
-        words = sklearn.feature_extraction.text.TfidfVectorizer()
-        chars = sklearn.feature_extraction.text.TfidfVectorizer()
-        
-        #model = sklearn.pipeline.Pipeline([
-         #   ("features_words", words),
-          #  ("features_chars", chars),
-           # ("algo", algo)])
-           
-        model = sklearn.pipeline.Pipeline([
-            ("features", sklearn.pipeline.FeatureUnion(
-                ([("words", sklearn.feature_extraction.text.TfidfVectorizer())]) + 
-                ([("chars", sklearn.feature_extraction.text.TfidfVectorizer())]))),
-            ("algo", algo)])
-        
-        # TODO CV
-        
-        # , "features__words__stop_words" : [None], "features__chars__stop_words" : [None]
-        grid = {"features__words__sublinear_tf" : [True], "features__chars__sublinear_tf" : [False],"features__words__lowercase" : [True],
-                "features__chars__lowercase" : [False], "features__words__analyzer" : ["word"], "features__chars__analyzer" : ["char_wb"],
-                #"features__words__ngram_range" : [(1, 2), (1, 3), (1, 4)], "features__chars__ngram_range" : [(1, 2), (1, 3), (1, 4)],
-                # toto bolo 0.819
-                "features__words__ngram_range" : [(1, 2)], "features__chars__ngram_range" : [ (1, 3), (1, 4), (1,5), (1,6)],
-                # toto bolo TODO
-                "features__words__binary" : [False], "features__chars__binary" : [True]
-                }
-        model = sklearn.model_selection.GridSearchCV(estimator=model,  
-                                                      cv = sklearn.model_selection.StratifiedKFold(5), 
-                                                      param_grid=grid, 
-                                                      n_jobs=7, 
-                                                      refit=True,
-                                                      verbose =100)
-        
+        model = LinearSVC().fit(train_features, train_targets)
 
+        test_features = hstack([char_vectorizer.transform(X_test), word_vectorizer.transform(X_test)])
+        print(accuracy_score(y_test, model.predict(test_features)))
         
-        model.fit(train.data, train.target)
-        
-        print("Best parameters",model.best_params_)
-        print("Best Score:", model.best_score_)
-
         # Serialize the model.
         with lzma.open(args.model_path, "wb") as model_file:
-            pickle.dump(model, model_file)
+            pickle.dump((model, char_vectorizer, word_vectorizer), model_file)
 
     else:
         # Use the model and return test set predictions.
         test = Dataset(args.predict)
 
         with lzma.open(args.model_path, "rb") as model_file:
-            model = pickle.load(model_file)
+            model, char_vectorizer, word_vectorizer = pickle.load(model_file)
 
         # TODO: Generate `predictions` with the test set predictions, either
         # as a Python list or a NumPy array.
-        predictions = model.predict(test.data)
+        features = hstack([char_vectorizer.transform(test.data), word_vectorizer.transform(test.data)])
+        predictions = model.predict(features)
 
         return predictions
 
@@ -110,16 +89,3 @@ def main(args: argparse.Namespace) -> Optional[npt.ArrayLike]:
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
     main(args)
-    
-    
-#Rasto Nowak
-
-#6a81285c-247a-11ec-986f-f39926f24a9c
-
-#Patrik Brocek
-
-#5ccdc432-238f-11ec-986f-f39926f24a9c
-
-#Martin Oravec
-
-#1056cfa0-24fb-11ec-986f-f39926f24a9c
