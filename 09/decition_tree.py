@@ -23,7 +23,7 @@ parser.add_argument("--test_size", default=0.25, type=lambda x: int(x) if x.isdi
 class DecisionTree:
     class Node:
         def __init__(self, instances, prediction):
-            self.is_leaf = True
+            self.is_leaf = True            
             self.instances = instances
             self.prediction = prediction
 
@@ -33,14 +33,18 @@ class DecisionTree:
             self.value = value
             self.left = left
             self.right = right
-        
+    
+    def predict_dato(self, dato):
+        node = self._root
+        while not node.is_leaf:
+            node = node.left if dato[node.feature] <= node.value else node.right
+        return node.prediction
+    
     def predict(self, data):
+        # data.shape = (n, d)                
         results = np.zeros(len(data), dtype=np.int32)
         for i, dato in enumerate(data):
-            node = self._root
-            while not node.is_leaf:
-                node = node.left if dato[node.feature] <= node.value else node.right
-            results[i] = node.prediction
+            results[i] = self.predict_dato(dato)
         return results
     
     def __init__(self, criterion, max_depth, min_to_split, max_leaves):
@@ -77,6 +81,7 @@ class DecisionTree:
         self._recursive_approach(node.right, depth + 1)
 
     def _adaptive_approach(self):
+        
         heap =  []
         heapq.heappush(heap, ( self._best_split(self._root), 0, 0, self._root, *self._best_split(self._root)))
 
@@ -93,7 +98,7 @@ class DecisionTree:
     
     def _best_split(self, node):        
         # best_crierion, features, value, left, right
-        best_criterion = None
+        best_criterion = np.inf
 
         for feature in range(self._data.shape[1]):
             sorted_indices, borders = self._find_borders(node.instances, feature)
@@ -101,19 +106,39 @@ class DecisionTree:
                 left = sorted_indices[:np.searchsorted(self._data[sorted_indices, feature], value)]
                 right = sorted_indices[np.searchsorted(self._data[sorted_indices, feature], value):]
                 criterion = self._criterion(left) + self._criterion(right)
-            if best_criterion is None or criterion < best_criterion:
+            if criterion < best_criterion:
                 best_criterion, best_feature, best_value, best_left, best_right = criterion, feature, value, left, right           
         
         return best_criterion - self._criterion(node.instances), best_feature, best_value, best_left, best_right
 
+    def _calculate_criterion(self, sorted_indices, feature, i):
+        value = (self._data[sorted_indices[i], feature] + self._data[sorted_indices[i + 1], feature]) / 2
+        left, right = sorted_indices[:i + 1], sorted_indices[i + 1:]
+        return self._criterion(left) + self._criterion(right), value, left, right
+
+    def _find_best_split(self, node):
+        best_criterion = np.inf
+        for feature in range(self._data.shape[1]):
+            sorted_indices = node.instances[np.argsort(self._data[node.instances, feature])] # TODO check
+            for i in range(len(sorted_indices) - 1):
+                if self._data[sorted_indices[i], feature] == self._data[sorted_indices[i + 1], feature]:
+                    # same dividing value
+                    continue
+                criterion, value, left, right = self._calculate_criterion(sorted_indices, feature, i)
+                if criterion < best_criterion:
+                    best_criterion, best_feature, best_value, best_left, best_right = \
+                        criterion, feature, value, left, right
+
+        return best_criterion - self._criterion(node.instances), best_feature, best_value, best_left, best_right
+    
     def _create_leaf(self, instances):
         self._leaves += 1
         classes, counts = np.unique(self._targets[instances], return_counts=True)
         return self.Node(instances, classes[np.argmax(counts)])
 
     def can_split(self, node, depth):
-        # can split if depth is not max depth
-        # and instances is more thatn min_to_split
+        # can split if depth is not max depth or depth is smaller than max_depth
+        # and instances is more than min_to_split (or max_leaves in None)
         # and criterion is not zero        
         return (self._max_depth is None or depth < self._max_depth) and \
                (self._max_leaves is None or self._max_leaves > self._leaves) and \
